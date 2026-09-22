@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FeatureToggleButton } from "@/components/shared/FeatureToggleButton";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 /**
  * TopNav Component
@@ -103,6 +104,9 @@ export function TopNav(): React.ReactElement {
 
           {/* Feature Toggle Button */}
           <FeatureToggleButton />
+
+          {/* Theme Toggle Button */}
+          <ThemeToggle />
 
           {/* User Menu Dropdown (Using shadcn DropdownMenu) */}
           <DropdownMenu>
