@@ -129,18 +129,10 @@ export const LoginForm: React.FC = () => {
           {/* Forgot Password Link */}
           <div className="text-center">
             <Link
-              href="/auth/forgot-password"
-              className="text-sm text-muted-foreground hover:underline"
+              href="/forgot-password"
+              className="text-sm text-muted-foreground hover:text-primary"
             >
               Forgot password?
-            </Link>
-          </div>
-
-          {/* Signup Link */}
-          <div className="text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="font-semibold hover:underline">
-              Sign up
             </Link>
           </div>
         </form>

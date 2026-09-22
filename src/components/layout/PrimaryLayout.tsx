@@ -22,9 +22,11 @@ interface LayoutProps {
  */
 const ROUTE_CONFIG = {
   auth: [
-    "/auth/login",
-    "/auth/signup",
-    "/auth/forgot-password",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/forgotpassword",
+    "/reset",
     "/auth/verify",
     "/contact",
   ],
