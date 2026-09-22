@@ -6,40 +6,34 @@ import axios from "axios";
  * Configured to communicate with .NET backend
  *
  * Features:
- * - Automatic token injection from localStorage
+ * - httpOnly cookie authentication (managed by backend)
  * - 401 redirect to login on auth failure
  * - Configurable timeout
+ * - Automatic cookie inclusion in all requests
+ *
+ * Note: Authentication tokens are managed via httpOnly cookies set by the backend.
+ * No manual token storage or injection required.
  *
  * Usage:
  * import { apiClient } from '@/lib/api-client'
- *
  * const { data } = await apiClient.get('/api/users')
  */
 export const apiClient = axios.create({
-  baseURL:
-    "https://app-k2summit-api-poc-eastus-d3b5hzbkgaftfab5.eastus-01.azurewebsites.net/",
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 30000,
+  // Enable automatic cookie inclusion in all requests (for httpOnly cookies)
+  withCredentials: true,
 });
 
-// Request interceptor: Add auth token
-apiClient.interceptors.request.use((config) => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Response interceptor: Handle 401
+// Response interceptor: Handle 401 (unauthenticated)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("auth_token");
-        // Use router.push instead of window.location.href for Next.js
-        const url = new URL("/login", window.location.origin);
+        // Redirect to login on authentication failure
+        // httpOnly cookies will be automatically cleared by backend
+        const url = new URL("/auth/login", window.location.origin);
         window.location.href = url.toString();
       }
     }

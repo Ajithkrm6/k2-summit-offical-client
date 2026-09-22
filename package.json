@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:api": "orval",
+    "generate:api:watch": "orval --watch"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -39,9 +41,11 @@
     "@types/node": "^26.6.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^18.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "lint-staged": "^17.5.1",
+    "orval": "^8.35.0",
     "prettier": "^3.9.8",
     "storybook": "^10.6.0",
     "tailwindcss": "^4",

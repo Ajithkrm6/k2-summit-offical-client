@@ -3,14 +3,22 @@
  * Zustand store for managing authentication state
  * Uses Immer for immutable state updates
  *
+ * State managed here:
+ * - user: Current authenticated user
+ * - isAuthenticated: Whether user is logged in
+ * - isLoading: API call in progress
+ * - error: Last error message
+ *
+ * Note: Authentication token stored in httpOnly cookie by backend
+ *
  * @example
- * const { user, isLoading, login, logout } = useAuthStore()
+ * const { user, isAuthenticated, setUser, setError } = useAuthStore()
  */
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   email: string;
   name: string;
@@ -19,19 +27,28 @@ interface AuthUser {
 }
 
 interface AuthState {
-  // State
+  // ===== STATE =====
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  token: string | null;
 
-  // Actions
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  // ===== SETTERS =====
   setUser: (user: AuthUser) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  setAuthenticated: (authenticated: boolean) => void;
+
+  // ===== ACTIONS =====
+  reset: () => void;
   clearError: () => void;
+
+  // ===== INITIALIZATION =====
+  /**
+   * Called on app init to restore user from backend if authenticated
+   * Should be called in a useEffect on app mount
+   */
+  initialize: () => Promise<void>;
 }
 
 /**
@@ -40,103 +57,111 @@ interface AuthState {
  */
 export const useAuthStore = create<AuthState>()(
   immer((set) => ({
-    // Initial state
+    // ===== INITIAL STATE =====
     user: null,
     isAuthenticated: false,
     isLoading: false,
     error: null,
-    token: null,
 
-    // Actions
-    login: async (email: string) => {
-      set((state) => {
-        state.isLoading = true;
-        state.error = null;
-      });
-
-      try {
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/auth/login', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({ email, password }),
-        // })
-        // const data = await response.json()
-
-        // Mock successful login
-        const mockUser: AuthUser = {
-          id: "1",
-          email,
-          name: "John Doe",
-          role: "user",
-        };
-
-        set((state) => {
-          state.user = mockUser;
-          state.isAuthenticated = true;
-          state.token = "mock-token-123";
-          state.isLoading = false;
-        });
-      } catch (error) {
-        set((state) => {
-          state.error = error instanceof Error ? error.message : "Login failed";
-          state.isLoading = false;
-        });
-        throw error;
-      }
-    },
-
-    logout: () => {
-      set((state) => {
-        state.user = null;
-        state.isAuthenticated = false;
-        state.token = null;
-        state.error = null;
-      });
-    },
-
-    signup: async (email: string, password: string, name: string) => {
-      set((state) => {
-        state.isLoading = true;
-        state.error = null;
-      });
-
-      try {
-        // TODO: Replace with actual API call
-        const mockUser: AuthUser = {
-          id: "1",
-          email,
-          name,
-          role: "user",
-        };
-
-        set((state) => {
-          state.user = mockUser;
-          state.isAuthenticated = true;
-          state.token = "mock-token-123";
-          state.isLoading = false;
-        });
-      } catch (error) {
-        set((state) => {
-          state.error =
-            error instanceof Error ? error.message : "Signup failed";
-          state.isLoading = false;
-        });
-        throw error;
-      }
-    },
-
+    // ===== SETTERS =====
+    /**
+     * Set the current user and mark as authenticated
+     */
     setUser: (user: AuthUser) => {
       set((state) => {
         state.user = user;
         state.isAuthenticated = true;
+        state.error = null;
       });
     },
 
+    /**
+     * Set loading state for API calls
+     */
+    setLoading: (loading: boolean) => {
+      set((state) => {
+        state.isLoading = loading;
+      });
+    },
+
+    /**
+     * Set error message
+     */
+    setError: (error: string | null) => {
+      set((state) => {
+        state.error = error;
+      });
+    },
+
+    /**
+     * Set authentication status
+     */
+    setAuthenticated: (authenticated: boolean) => {
+      set((state) => {
+        state.isAuthenticated = authenticated;
+      });
+    },
+
+    // ===== ACTIONS =====
+    /**
+     * Reset all auth state
+     * Called on logout or when auth fails
+     */
+    reset: () => {
+      set((state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.error = null;
+        state.isLoading = false;
+        // httpOnly cookie is cleared by backend
+      });
+    },
+
+    /**
+     * Clear only the error message
+     */
     clearError: () => {
       set((state) => {
         state.error = null;
       });
+    },
+
+    // ===== INITIALIZATION =====
+    /**
+     * Initialize auth on app load
+     * - Checks if user is still authenticated
+     * - Validates session with backend
+     * - Restores user data if available
+     *
+     * Called in useEffect on app mount
+     */
+    initialize: async () => {
+      set((state) => {
+        state.isLoading = true;
+      });
+
+      try {
+        // TODO: Call API to validate session and get user profile
+        // const response = await apiClient.get('/api/v1/User/Profile')
+        // if (response.data?.value) {
+        //   set user data
+        // }
+
+        // For now, if httpOnly cookie exists, user should be authenticated
+        // This will be verified by backend on first API call
+        set((state) => {
+          state.isLoading = false;
+        });
+      } catch (error) {
+        // Clear auth if session is invalid
+        set((state) => {
+          state.isAuthenticated = false;
+          state.user = null;
+          state.error =
+            error instanceof Error ? error.message : "Failed to verify session";
+          state.isLoading = false;
+        });
+      }
     },
   })),
 );

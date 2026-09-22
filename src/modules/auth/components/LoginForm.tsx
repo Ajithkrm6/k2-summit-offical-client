@@ -6,14 +6,13 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { useAuthStore } from "../store/auth.store";
+import { useLogin } from "@/lib/api/hooks/k2-tax-api/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAuthStore } from "../store/auth.store";
 
 // Validation schema using Zod
 const loginSchema = z.object({
@@ -36,9 +36,8 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginForm: React.FC = () => {
-  const router = useRouter();
-  const { login, isLoading, error: authError } = useAuthStore();
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { login, isPending } = useLogin();
+  const { error } = useAuthStore();
 
   const {
     register,
@@ -48,17 +47,9 @@ export const LoginForm: React.FC = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    try {
-      setSubmitError(null);
-      await login(data.email, data.password);
-      // Redirect to dashboard on successful login
-      router.push("/dashboard");
-    } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : "An error occurred during login",
-      );
-    }
+  const onSubmit = (data: LoginFormData) => {
+    // Hook handles redirect and error - no need for try/catch or manual routing
+    login({ email: data.email, password: data.password });
   };
 
   return (
@@ -81,7 +72,7 @@ export const LoginForm: React.FC = () => {
               type="email"
               placeholder="you@example.com"
               {...register("email")}
-              disabled={isLoading}
+              disabled={isPending}
             />
             {errors.email && (
               <p className="text-xs text-destructive">{errors.email.message}</p>
@@ -98,7 +89,7 @@ export const LoginForm: React.FC = () => {
               type="password"
               placeholder="••••••••"
               {...register("password")}
-              disabled={isLoading}
+              disabled={isPending}
             />
             {errors.password && (
               <p className="text-xs text-destructive">
@@ -108,15 +99,15 @@ export const LoginForm: React.FC = () => {
           </div>
 
           {/* Error Messages */}
-          {(submitError || authError) && (
+          {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {submitError || authError}
+              {error}
             </div>
           )}
 
           {/* Submit Button */}
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? (
+          <Button type="submit" disabled={isPending} className="w-full">
+            {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Logging in...
