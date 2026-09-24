@@ -13,19 +13,10 @@ import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useDashboardStore } from "@/modules/dashboard/store/dashboard.store";
 import { Edit, Trash } from "lucide-react";
-import { useSession } from "next-auth/react";
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
-  const {
-    stats,
-    recentCases,
-    quickActions,
-    teamMembers,
-    upcomingDeadlines,
-    getStatusVariant,
-    getStageVariant,
-  } = useDashboardStore();
+  const { stats, recentCases, getStatusVariant, getStageVariant } =
+    useDashboardStore();
 
   return (
     <div className="space-y-8">
@@ -57,7 +48,6 @@ export default function DashboardPage() {
       <div className="container mx-auto my-4 rounded-lg border p-3 space-y-4 bg-white">
         <div className="grid p-3 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => {
-            const Icon = stat.icon;
             return (
               <Card key={index} className="rounded-lg">
                 <CardContent>
