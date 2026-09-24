@@ -1,12 +1,9 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
-import { useCallback, useState, useMemo } from "react";
-import { Bell, LogOut, Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { FeatureToggleButton } from "@/components/shared/FeatureToggleButton";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FeatureToggleButton } from "@/components/shared/FeatureToggleButton";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useLogout } from "@/lib/api/hooks/k2-tax-api/useAuth";
+import { useAuthStore } from "@/modules/auth/store/auth.store";
+import { Bell, LogOut, Settings } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useMemo, useState } from "react";
 
 /**
  * TopNav Component
@@ -35,50 +35,33 @@ import { ThemeToggle } from "@/components/shared/ThemeToggle";
  */
 export function TopNav(): React.ReactElement {
   // Authentication state
-  const { data: session } = useSession();
-  const router = useRouter();
+  const { user } = useAuthStore();
+  const { logout, isPending } = useLogout();
 
-  // UI state
   const [notificationCount] = useState(3);
 
-  /**
-   * Handle user logout with proper cleanup
-   * Follows async/await pattern for better error handling
-   */
-  const handleLogout = useCallback(async () => {
-    try {
-      await signOut({ redirect: false });
-      // Small delay to allow signOut to complete
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 500);
-    } catch (error) {
-      console.error("Logout failed:", error);
-      router.push("/auth/login");
-    }
-  }, [router]);
+  const handleLogout = useCallback(() => {
+    logout();
+  }, [logout]);
 
   /**
    * Memoized user info to prevent unnecessary re-renders
    */
   const userInfo = useMemo(
     () => ({
-      name: session?.user?.name || "User",
-      email: session?.user?.email || "user@example.com",
-      initials: (session?.user?.name || "U")
+      name: user?.name || "User",
+      email: user?.email || "user@example.com",
+      initials: (user?.name || "U")
         .split(" ")
         .map((n) => n[0])
         .join("")
         .toUpperCase(),
     }),
-    [session?.user],
+    [user],
   );
 
   return (
-    <header
-      className="bg-white border-b border-border sticky top-0 z-40 h-16 shadow-sm"
-      role="banner"
-    >
+    <header className=" sticky top-0 z-40 h-16 shadow-sm" role="banner">
       <div className="flex items-center justify-between h-full px-4 md:px-6 gap-4">
         {/* Left Section - Menu Toggle */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -145,7 +128,7 @@ export function TopNav(): React.ReactElement {
               {/* Profile Settings */}
               <DropdownMenuItem>
                 <Link
-                  href="/settings/profile"
+                  href="/dashboard"
                   className="flex items-center gap-2 w-full"
                 >
                   <Settings className="w-4 h-4" />
@@ -156,7 +139,7 @@ export function TopNav(): React.ReactElement {
               {/* Preferences */}
               <DropdownMenuItem>
                 <Link
-                  href="/settings/preferences"
+                  href="/dashboard"
                   className="flex items-center gap-2 w-full"
                 >
                   <Settings className="w-4 h-4" />
@@ -169,10 +152,11 @@ export function TopNav(): React.ReactElement {
               {/* Logout */}
               <DropdownMenuItem
                 onClick={handleLogout}
-                className="text-destructive focus:text-destructive cursor-pointer"
+                disabled={isPending}
+                className="text-destructive focus:text-destructive cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                <span>Logout</span>
+                <span>{isPending ? "Logging out..." : "Logout"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,12 +1,13 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
-import axios from "axios";
-import { SessionProvider } from "next-auth/react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/utils/query-client";
+import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { queryClient } from "@/utils/query-client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import axios from "axios";
+import { SessionProvider } from "next-auth/react";
+import { ReactNode, useEffect } from "react";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -39,6 +40,7 @@ export function Providers({ children }: ProvidersProps) {
       <SessionProvider>
         <TooltipProvider>
           <QueryClientProvider client={queryClient}>
+            <Toaster />
             {children}
           </QueryClientProvider>
         </TooltipProvider>

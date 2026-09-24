@@ -11,20 +11,22 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/modules/auth/store/auth.store";
+import { toast } from "@/components/ui/toast";
 import {
+  usePostApiV1UserForgotPassword,
   usePostApiV1UserLogin,
   usePostApiV1UserLogOut,
-  usePostApiV1UserForgotPassword,
   usePostApiV1UserResetPassword,
 } from "@/lib/api/generated/k2-tax-api";
 import type {
-  LoginRequest,
   ForgotPasswordRequest,
+  LoginRequest,
   ResetPasswordRequest,
 } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { useAuthStore } from "@/modules/auth/store/auth.store";
 import type { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
+import React from "react";
 
 /**
  * Actual API response structure for login
@@ -64,6 +66,9 @@ export const useLogin = () => {
   const router = useRouter();
   const { setUser, setError, setLoading } = useAuthStore();
 
+  // Store email to use after login success
+  const emailRef = React.useRef<string>("");
+
   const { mutate, ...rest } = usePostApiV1UserLogin({
     mutation: {
       onMutate: () => {
@@ -81,9 +86,16 @@ export const useLogin = () => {
           // Token is automatically handled via httpOnly cookie by backend
           setUser({
             id: loginData.appUserId || loginData.staffUserId || "unknown",
-            email: "", // Email not provided in response
-            name: "", // Name not provided in response
+            email: emailRef.current, // Use email from login request
+            name: emailRef.current.split("@")[0], // Use email username as name
             role: "user", // Default role, update if staffUserId is present
+          });
+
+          // Show success toast
+          toast.add({
+            title: "Login successful",
+            description: `Welcome back, ${emailRef.current.split("@")[0]}!`,
+            type: "success",
           });
 
           // Redirect to dashboard
@@ -92,6 +104,11 @@ export const useLogin = () => {
           // Login failed - API returned error response
           const errorMsg = "Login failed. Please check your credentials.";
           setError(errorMsg);
+          toast.add({
+            title: "Login failed",
+            description: errorMsg,
+            type: "error",
+          });
         }
       },
       onError: (error: AxiosError) => {
@@ -110,7 +127,10 @@ export const useLogin = () => {
   });
 
   return {
-    login: (credentials: LoginRequest) => mutate({ data: credentials }),
+    login: (credentials: LoginRequest) => {
+      emailRef.current = credentials.email || "";
+      mutate({ data: credentials });
+    },
     ...rest,
   };
 };
@@ -136,16 +156,28 @@ export const useLogout = () => {
         // Clear auth state in store
         reset();
 
+        // Show success toast
+        toast.add({
+          title: "Logged out",
+          description: "You have been successfully logged out.",
+          type: "success",
+        });
+
         // httpOnly cookie is cleared automatically by backend
         // Redirect to login
-        router.push("/auth/login");
+        router.push("/login");
       },
       onError: (error: AxiosError) => {
         // Even if logout fails, clear local state
-        reset();
+        // reset();
 
         const errorMessage = getErrorMessage(error, "Logout failed");
         setError(errorMessage);
+        toast.add({
+          title: "Logout failed",
+          description: errorMessage,
+          type: "error",
+        });
         console.error("Logout failed:", error);
       },
       onSettled: () => {
@@ -176,6 +208,11 @@ export const useForgotPassword = () => {
       },
       onSuccess: () => {
         console.log("Password reset email sent successfully");
+        toast.add({
+          title: "Email sent",
+          description: "Password reset email has been sent to your inbox.",
+          type: "success",
+        });
       },
       onError: (error: AxiosError) => {
         const errorMessage = getErrorMessage(
@@ -183,6 +220,11 @@ export const useForgotPassword = () => {
           "Failed to send password reset email",
         );
         setError(errorMessage);
+        toast.add({
+          title: "Failed to send email",
+          description: errorMessage,
+          type: "error",
+        });
         console.error("Forgot password failed:", error);
       },
       onSettled: () => {
@@ -215,12 +257,22 @@ export const useResetPassword = () => {
       },
       onSuccess: () => {
         console.log("Password reset successful");
+        toast.add({
+          title: "Password reset successful",
+          description: "Your password has been reset. Please log in again.",
+          type: "success",
+        });
         // Redirect to login after short delay
-        setTimeout(() => router.push("/auth/login"), 1500);
+        router.push("/login");
       },
       onError: (error: AxiosError) => {
         const errorMessage = getErrorMessage(error, "Password reset failed");
         setError(errorMessage);
+        toast.add({
+          title: "Password reset failed",
+          description: errorMessage,
+          type: "error",
+        });
         console.error("Password reset failed:", error);
       },
       onSettled: () => {

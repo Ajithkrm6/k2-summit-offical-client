@@ -1,9 +1,8 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
-import { useSession } from "next-auth/react";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { ReactNode, useMemo } from "react";
 import { NavigationSidebar } from "./NavigationSidebar";
 import { TopNav } from "./TopNav";
 
@@ -119,9 +118,7 @@ export function PrimaryLayout({ children }: LayoutProps) {
             aria-label="Page content"
           >
             {/* Content Wrapper with Consistent Padding */}
-            <div className="p-4 space-y-3 bg-gradient-to-br from-blue-50">
-              {children}
-            </div>
+            <div className="p-4 space-y-3 bg-[#EEF0F3]">{children}</div>
           </main>
         </SidebarInset>
       </div>
