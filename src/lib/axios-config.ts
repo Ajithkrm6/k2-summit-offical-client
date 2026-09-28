@@ -7,7 +7,7 @@
 import axios from "axios";
 
 // Set defaults for all axios instances
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
+axios.defaults.baseURL = "";
 axios.defaults.timeout = 30000;
 axios.defaults.withCredentials = true;
 
@@ -17,7 +17,7 @@ axios.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        const url = new URL("/auth/login", window.location.origin);
+        const url = new URL("/login", window.location.origin);
         window.location.href = url.toString();
       }
     }

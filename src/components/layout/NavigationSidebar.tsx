@@ -1,35 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Settings } from "lucide-react";
-import {
-  ChevronDown,
-  LayoutDashboard,
-  FileText,
-  Briefcase,
-  TrendingUp,
-  Home,
-  Users,
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarMenuSubButton,
-  SidebarFooter,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useLogout } from "@/lib/api/hooks/k2-tax-api/useAuth";
 import { featureGate } from "@/utils/feature-gate";
 import type { FeatureModuleKey } from "@/utils/features.config";
+import {
+  Briefcase,
+  ChevronDown,
+  FileText,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useMemo, useState } from "react";
 
 interface SubmenuItem {
   label: string;
@@ -224,6 +226,7 @@ const BADGE_VARIANT_MAP: Record<
  */
 export function NavigationSidebar() {
   const pathname = usePathname();
+  const { logout, isPending } = useLogout();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Auto-expand menu items based on current pathname
@@ -406,7 +409,14 @@ export function NavigationSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <Button>Logout</Button>
+        <Button
+          onClick={logout}
+          disabled={isPending}
+          className="flex justify-between items-center"
+        >
+          <span>{isPending ? "Logging out..." : "Logout"}</span>
+          <LogOut className="w-4 h-4 mr-2" />
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );

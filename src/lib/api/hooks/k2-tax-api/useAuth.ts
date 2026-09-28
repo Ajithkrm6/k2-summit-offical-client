@@ -98,8 +98,14 @@ export const useLogin = () => {
             type: "success",
           });
 
-          // Redirect to dashboard
-          router.push("/dashboard");
+          // Get returnTo parameter from URL (set by proxy.ts redirect)
+          // Falls back to /dashboard if not provided
+          const returnTo =
+            new URLSearchParams(window.location.search).get("returnTo") ||
+            "/dashboard";
+
+          // Redirect to original page or dashboard
+          router.push(returnTo);
         } else {
           // Login failed - API returned error response
           const errorMsg = "Login failed. Please check your credentials.";
