@@ -21,19 +21,8 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { loginSchema, type LoginFormData } from "../lib/schemas";
 import { useAuthStore } from "../store/auth.store";
-
-// Validation schema using Zod
-const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(6, "Password must be at least 6 characters"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginForm: React.FC = () => {
   const { login, isPending } = useLogin();

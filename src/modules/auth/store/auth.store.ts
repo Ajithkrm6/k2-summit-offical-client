@@ -32,12 +32,13 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-
+  isSuccess?: boolean;
   // ===== SETTERS =====
   setUser: (user: AuthUser) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setAuthenticated: (authenticated: boolean) => void;
+  setSuccess: (success: boolean) => void;
 
   // ===== ACTIONS =====
   reset: () => void;
@@ -62,7 +63,7 @@ export const useAuthStore = create<AuthState>()(
     isAuthenticated: false,
     isLoading: false,
     error: null,
-
+    isSuccess: false,
     // ===== SETTERS =====
     /**
      * Set the current user and mark as authenticated
@@ -99,6 +100,14 @@ export const useAuthStore = create<AuthState>()(
     setAuthenticated: (authenticated: boolean) => {
       set((state) => {
         state.isAuthenticated = authenticated;
+      });
+    },
+    /**
+     * Set success status
+     */
+    setSuccess: (success: boolean) => {
+      set((state) => {
+        state.isSuccess = success;
       });
     },
 

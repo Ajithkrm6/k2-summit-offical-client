@@ -6,14 +6,7 @@
 
 "use client";
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import Link from "next/link";
-import { ArrowLeft, Mail, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -21,50 +14,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-// Validation schema using Zod
-const forgotPasswordSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
-});
-
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+import { Input } from "@/components/ui/input";
+import { useForgotPassword } from "@/lib/api/hooks/k2-tax-api/useAuth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, CheckCircle, Loader2, Mail } from "lucide-react";
+import Link from "next/link";
+import React from "react";
+import { useForm } from "react-hook-form";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordFormData,
+} from "../lib/schemas";
+import { useAuthStore } from "../store/auth.store";
 
 export const ForgotPasswordForm: React.FC = () => {
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
+  const { sendResetEmail, isPending, isSuccess } = useForgotPassword();
+  const { error, setSuccess } = useAuthStore();
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     getValues,
   } = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
   });
-
-  const onSubmit = async (data: ForgotPasswordFormData) => {
-    try {
-      setSubmitError(null);
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/forgot-password', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email: data.email }),
-      // });
-
-      // Simulate API call
-      void data; // Reference data to satisfy linter
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setIsSubmitted(true);
-    } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : "Failed to send recovery link",
-      );
-    }
+  console.log("isSuccess from page:", isSuccess, "isPending:", isPending);
+  const onSubmit = (data: ForgotPasswordFormData) => {
+    // Call API to send password reset email
+    // Success screen will show when API returns success (isSuccess = true)
+    sendResetEmail({ email: data.email });
   };
 
-  if (isSubmitted) {
+  if (isSuccess && !isPending) {
     const email = getValues("email");
     return (
       <Card className="w-full">
@@ -95,8 +76,7 @@ export const ForgotPasswordForm: React.FC = () => {
             variant="outline"
             className="w-full"
             onClick={() => {
-              setIsSubmitted(false);
-              setSubmitError(null);
+              setSuccess(false); // Reset success to show form again
             }}
           >
             Send to a Different Email
@@ -111,7 +91,7 @@ export const ForgotPasswordForm: React.FC = () => {
             </div>
           </div>
 
-          <Link href="/auth/login" className="block">
+          <Link href="/login" className="block">
             <Button variant="ghost" className="w-full">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Login
@@ -147,7 +127,7 @@ export const ForgotPasswordForm: React.FC = () => {
               type="email"
               placeholder="you@example.com"
               {...register("email")}
-              disabled={isSubmitting}
+              disabled={isPending}
             />
             {errors.email && (
               <p className="text-xs text-destructive">{errors.email.message}</p>
@@ -155,15 +135,15 @@ export const ForgotPasswordForm: React.FC = () => {
           </div>
 
           {/* Error Messages */}
-          {submitError && (
+          {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {submitError}
+              {error}
             </div>
           )}
 
           {/* Submit Button */}
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? (
+          <Button type="submit" disabled={isPending} className="w-full">
+            {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Sending...

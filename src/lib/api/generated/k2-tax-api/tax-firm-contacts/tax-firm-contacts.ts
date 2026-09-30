@@ -20,6 +20,9 @@ import type {
   CreateTaxFirmContactResponse,
   CreateTaxFirmContactResponseErrorOr,
   ProblemDetails,
+  UpdateTaxFirmContactRequest,
+  UpdateTaxFirmContactResponse,
+  UpdateTaxFirmContactResponseErrorOr,
 } from "../k2TaxAPI.schemas";
 
 export const postApiV1TaxFirmTaxfirmidContact = (
@@ -122,6 +125,120 @@ export const usePostApiV1TaxFirmTaxfirmidContact = <
 > => {
   return useMutation(
     getPostApiV1TaxFirmTaxfirmidContactMutationOptions(options),
+    queryClient,
+  );
+};
+export const putApiV1TaxFirmTaxFirmIdContactContactId = (
+  taxFirmId: string,
+  contactId: string,
+  updateTaxFirmContactRequest?: UpdateTaxFirmContactRequest,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<UpdateTaxFirmContactResponseErrorOr>> => {
+  return axios.put(
+    `/api/v1/TaxFirm/${taxFirmId}/Contact/${contactId}`,
+    updateTaxFirmContactRequest,
+    options,
+  );
+};
+
+export const getPutApiV1TaxFirmTaxFirmIdContactContactIdUrl = (
+  taxFirmId: string,
+  contactId: string,
+) => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/TaxFirm/${taxFirmId}/Contact/${contactId}`,
+      baseURL: "",
+    });
+};
+
+export const getPutApiV1TaxFirmTaxFirmIdContactContactIdMutationKey = () =>
+  ["putApiV1TaxFirmTaxFirmIdContactContactId"] as const;
+
+export const getPutApiV1TaxFirmTaxFirmIdContactContactIdMutationOptions = <
+  TError = AxiosError<ProblemDetails | UpdateTaxFirmContactResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdContactContactId>>,
+    TError,
+    PutApiV1TaxFirmTaxFirmIdContactContactIdMutationVariables,
+    TContext
+  >;
+  axios?: AxiosRequestConfig;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdContactContactId>>,
+  TError,
+  PutApiV1TaxFirmTaxFirmIdContactContactIdMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPutApiV1TaxFirmTaxFirmIdContactContactIdMutationKey();
+  const { mutation: mutationOptions, axios: axiosOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, axios: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdContactContactId>>,
+    PutApiV1TaxFirmTaxFirmIdContactContactIdMutationVariables
+  > = (props) => {
+    const { taxFirmId, contactId, data } = props ?? {};
+
+    return putApiV1TaxFirmTaxFirmIdContactContactId(
+      taxFirmId,
+      contactId,
+      data,
+      axiosOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PutApiV1TaxFirmTaxFirmIdContactContactIdMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdContactContactId>>
+  >;
+export type PutApiV1TaxFirmTaxFirmIdContactContactIdMutationBody =
+  UpdateTaxFirmContactRequest | undefined;
+export type PutApiV1TaxFirmTaxFirmIdContactContactIdMutationError = AxiosError<
+  ProblemDetails | UpdateTaxFirmContactResponse
+>;
+export type PutApiV1TaxFirmTaxFirmIdContactContactIdMutationVariables = {
+  taxFirmId: string;
+  contactId: string;
+  data?: UpdateTaxFirmContactRequest;
+};
+
+export const usePutApiV1TaxFirmTaxFirmIdContactContactId = <
+  TError = AxiosError<ProblemDetails | UpdateTaxFirmContactResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdContactContactId>>,
+      TError,
+      PutApiV1TaxFirmTaxFirmIdContactContactIdMutationVariables,
+      TContext
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdContactContactId>>,
+  TError,
+  PutApiV1TaxFirmTaxFirmIdContactContactIdMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getPutApiV1TaxFirmTaxFirmIdContactContactIdMutationOptions(options),
     queryClient,
   );
 };

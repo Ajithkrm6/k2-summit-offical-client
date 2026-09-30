@@ -23,8 +23,8 @@ import {
   ChevronDown,
   FileText,
   Home,
-  LayoutDashboard,
   LogOut,
+  ScrollText,
   Settings,
   TrendingUp,
   Users,
@@ -70,26 +70,51 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   {
     icon: <Home className="w-5 h-5" />,
-    label: "Home",
-    href: "/",
+    label: "Dashboard",
+    href: "/dashboard",
   },
+  // {
+  //   icon: <LayoutDashboard className="w-5 h-5" />,
+  //   label: "Operations",
+  //   featureGate: "ops.dashboard",
+  //   badgeVariant: "default",
+  //   submenu: [
+  //     {
+  //       label: "Team Dashboard",
+  //       href: "/dashboard",
+  //       featureGate: "ops.dashboard",
+  //       badgeVariant: "default",
+  //     },
+  //     // {
+  //     //   label: "KPI Metrics",
+  //     //   href: "/ops",
+  //     //   featureGate: "ops.dashboard",
+  //     //   badgeVariant: "default",
+  //     // },
+  //   ],
+  // },
   {
-    icon: <LayoutDashboard className="w-5 h-5" />,
-    label: "Operations",
-    featureGate: "ops.dashboard",
+    icon: <ScrollText className="w-5 h-5" />,
+    label: "Tax Firm CRM",
     badgeVariant: "default",
     submenu: [
       {
-        label: "Team Dashboard",
-        href: "/dashboard",
-        featureGate: "ops.dashboard",
-        badgeVariant: "default",
+        label: "New Tax Firm ",
+        href: "/crm/addTaxFirm",
+        featureGate: "crm.addTaxFirm",
+        badgeVariant: "beta-s1",
       },
       {
-        label: "KPI Metrics",
-        href: "/ops",
-        featureGate: "ops.dashboard",
-        badgeVariant: "default",
+        label: "Add Contact",
+        href: "/workpool/intake",
+        featureGate: "workpool.intake",
+        badgeVariant: "beta-s1",
+      },
+      {
+        label: "Log an Activity",
+        href: "/workpool/intake",
+        featureGate: "workpool.intake",
+        badgeVariant: "beta-s1",
       },
     ],
   },
@@ -313,25 +338,24 @@ export function NavigationSidebar() {
               if (!hasSubmenu) {
                 return (
                   <SidebarMenuItem key={idx}>
-                    <Link href={item.href || "/"}>
-                      <SidebarMenuButton
-                        isActive={isItemActive(item.href)}
-                        className="relative w-full justify-start"
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
-                        {item.badge && (
-                          <Badge
-                            variant={
-                              BADGE_VARIANT_MAP[item.badgeVariant || "default"]
-                            }
-                            className="ml-auto text-xs"
-                          >
-                            {item.badge}
-                          </Badge>
-                        )}
-                      </SidebarMenuButton>
-                    </Link>
+                    <SidebarMenuButton
+                      render={<Link href={item.href || "/"} />}
+                      isActive={isItemActive(item.href)}
+                      className="relative w-full justify-start"
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                      {item.badge && (
+                        <Badge
+                          variant={
+                            BADGE_VARIANT_MAP[item.badgeVariant || "default"]
+                          }
+                          className="ml-auto text-xs"
+                        >
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
               }
@@ -379,6 +403,7 @@ export function NavigationSidebar() {
                       {visibleSubmenu.map((subitem, subIdx) => (
                         <SidebarMenuSubItem key={subIdx}>
                           <SidebarMenuSubButton
+                            render={<Link href={subitem.href || "/"} />}
                             href={subitem.href}
                             isActive={isItemActive(subitem.href)}
                           >

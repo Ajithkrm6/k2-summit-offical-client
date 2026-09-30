@@ -6,14 +6,7 @@
 
 "use client";
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -21,13 +14,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-// Validation schema using Zod
-const resetPasswordSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
-});
-
-type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordFormData,
+} from "../lib/schemas";
 
 export const ResetPasswordForm: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -38,11 +34,11 @@ export const ResetPasswordForm: React.FC = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
     getValues,
-  } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const onSubmit = async (data: ResetPasswordFormData) => {
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       setSubmitError(null);
       // TODO: Replace with actual API call

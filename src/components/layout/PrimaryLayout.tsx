@@ -107,19 +107,22 @@ export function PrimaryLayout({ children }: LayoutProps) {
         <NavigationSidebar />
 
         {/* Main Content Area with TopNav */}
-        <SidebarInset className="flex flex-col overflow-hidden">
+        <SidebarInset
+          className="flex flex-col overflow-hidden"
+          suppressHydrationWarning
+        >
           {/* Top Navigation - Sticky Header */}
           <TopNav />
 
           {/* Main Content - Scrollable */}
-          <main
+          <div
             className="flex-1 overflow-auto scroll-smooth"
             role="main"
             aria-label="Page content"
           >
             {/* Content Wrapper with Consistent Padding */}
             <div className="p-4 space-y-3 bg-[#EEF0F3]">{children}</div>
-          </main>
+          </div>
         </SidebarInset>
       </div>
     </SidebarProvider>

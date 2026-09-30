@@ -27,11 +27,12 @@ import type {
   CreateTaxFirmRequest,
   CreateTaxFirmResponse,
   CreateTaxFirmResponseErrorOr,
+  GetAllTaxFirmResponse,
+  GetAllTaxFirmResponseListErrorOr,
   GetTaxFirmResponse,
   GetTaxFirmResponseErrorOr,
   GetTaxFirmResponseListErrorOr,
   ProblemDetails,
-  PutApiV1TaxFirmTaxFirmIdParams,
   StringErrorOr,
   UpdateTaxFirmRequest,
   UpdateTaxFirmResponse,
@@ -322,19 +323,16 @@ export function useGetApiV1TaxFirmTaxFirmId<
 export const putApiV1TaxFirmTaxFirmId = (
   taxFirmId: string,
   updateTaxFirmRequest?: UpdateTaxFirmRequest,
-  params?: PutApiV1TaxFirmTaxFirmIdParams,
   options?: AxiosRequestConfig,
 ): Promise<AxiosResponse<UpdateTaxFirmResponseErrorOr>> => {
-  return axios.put(`/api/v1/TaxFirm/${taxFirmId}`, updateTaxFirmRequest, {
-    ...options,
-    params: { ...params, ...options?.params },
-  });
+  return axios.put(
+    `/api/v1/TaxFirm/${taxFirmId}`,
+    updateTaxFirmRequest,
+    options,
+  );
 };
 
-export const getPutApiV1TaxFirmTaxFirmIdUrl = (
-  taxFirmId: string,
-  params?: PutApiV1TaxFirmTaxFirmIdParams,
-) => {
+export const getPutApiV1TaxFirmTaxFirmIdUrl = (taxFirmId: string) => {
   return axios
     .create({
       baseURL: "",
@@ -343,7 +341,6 @@ export const getPutApiV1TaxFirmTaxFirmIdUrl = (
     .getUri({
       url: `/api/v1/TaxFirm/${taxFirmId}`,
       baseURL: "",
-      params,
     });
 };
 
@@ -380,9 +377,9 @@ export const getPutApiV1TaxFirmTaxFirmIdMutationOptions = <
     Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmId>>,
     PutApiV1TaxFirmTaxFirmIdMutationVariables
   > = (props) => {
-    const { taxFirmId, data, params } = props ?? {};
+    const { taxFirmId, data } = props ?? {};
 
-    return putApiV1TaxFirmTaxFirmId(taxFirmId, data, params, axiosOptions);
+    return putApiV1TaxFirmTaxFirmId(taxFirmId, data, axiosOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -399,7 +396,6 @@ export type PutApiV1TaxFirmTaxFirmIdMutationError = AxiosError<
 export type PutApiV1TaxFirmTaxFirmIdMutationVariables = {
   taxFirmId: string;
   data?: UpdateTaxFirmRequest;
-  params?: PutApiV1TaxFirmTaxFirmIdParams;
 };
 
 export const usePutApiV1TaxFirmTaxFirmId = <
@@ -522,93 +518,78 @@ export const useDeleteApiV1TaxFirmTaxFirmId = <
     queryClient,
   );
 };
-export const getApiV1StaffUserUserIdTaxFirms = (
-  userId: string,
+export const getApiV1UserTaxFirms = (
   options?: AxiosRequestConfig,
 ): Promise<AxiosResponse<GetTaxFirmResponseListErrorOr>> => {
-  return axios.get(`/api/v1/StaffUser/${userId}/TaxFirms`, options);
+  return axios.get(`/api/v1/User/TaxFirms`, options);
 };
 
-export const getGetApiV1StaffUserUserIdTaxFirmsUrl = (userId: string) => {
+export const getGetApiV1UserTaxFirmsUrl = () => {
   return axios
     .create({
       baseURL: "",
       params: null,
     })
     .getUri({
-      url: `/api/v1/StaffUser/${userId}/TaxFirms`,
+      url: `/api/v1/User/TaxFirms`,
       baseURL: "",
     });
 };
 
-export const getGetApiV1StaffUserUserIdTaxFirmsQueryKey = (userId: string) => {
-  return [`/api/v1/StaffUser/${userId}/TaxFirms`] as const;
+export const getGetApiV1UserTaxFirmsQueryKey = () => {
+  return [`/api/v1/User/TaxFirms`] as const;
 };
 
-export const getGetApiV1StaffUserUserIdTaxFirmsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+export const getGetApiV1UserTaxFirmsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
   TError = AxiosError<GetTaxFirmResponse[]>,
->(
-  userId: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
-        TError,
-        TData
-      >
-    >;
-    axios?: AxiosRequestConfig;
-  },
-) => {
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
+      TError,
+      TData
+    >
+  >;
+  axios?: AxiosRequestConfig;
+}) => {
   const { query: queryOptions, axios: axiosOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ??
-    getGetApiV1StaffUserUserIdTaxFirmsQueryKey(userId);
+  const queryKey = queryOptions?.queryKey ?? getGetApiV1UserTaxFirmsQueryKey();
 
   const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>
-  > = ({ signal }) =>
-    getApiV1StaffUserUserIdTaxFirms(userId, { signal, ...axiosOptions });
+    Awaited<ReturnType<typeof getApiV1UserTaxFirms>>
+  > = ({ signal }) => getApiV1UserTaxFirms({ signal, ...axiosOptions });
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: userId !== null && userId !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetApiV1StaffUserUserIdTaxFirmsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>
+export type GetApiV1UserTaxFirmsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getApiV1UserTaxFirms>>
 >;
-export type GetApiV1StaffUserUserIdTaxFirmsQueryError = AxiosError<
-  GetTaxFirmResponse[]
->;
+export type GetApiV1UserTaxFirmsQueryError = AxiosError<GetTaxFirmResponse[]>;
 
-export function useGetApiV1StaffUserUserIdTaxFirms<
-  TData = Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+export function useGetApiV1UserTaxFirms<
+  TData = Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
   TError = AxiosError<GetTaxFirmResponse[]>,
 >(
-  userId: string,
   options: {
     query: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+        Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
         TError,
         TData
       >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+          Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
           TError,
-          Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>
+          Awaited<ReturnType<typeof getApiV1UserTaxFirms>>
         >,
         "initialData"
       >;
@@ -618,24 +599,23 @@ export function useGetApiV1StaffUserUserIdTaxFirms<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGetApiV1StaffUserUserIdTaxFirms<
-  TData = Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+export function useGetApiV1UserTaxFirms<
+  TData = Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
   TError = AxiosError<GetTaxFirmResponse[]>,
 >(
-  userId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+        Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
         TError,
         TData
       >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+          Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
           TError,
-          Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>
+          Awaited<ReturnType<typeof getApiV1UserTaxFirms>>
         >,
         "initialData"
       >;
@@ -645,15 +625,14 @@ export function useGetApiV1StaffUserUserIdTaxFirms<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGetApiV1StaffUserUserIdTaxFirms<
-  TData = Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+export function useGetApiV1UserTaxFirms<
+  TData = Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
   TError = AxiosError<GetTaxFirmResponse[]>,
 >(
-  userId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+        Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
         TError,
         TData
       >
@@ -665,15 +644,14 @@ export function useGetApiV1StaffUserUserIdTaxFirms<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useGetApiV1StaffUserUserIdTaxFirms<
-  TData = Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+export function useGetApiV1UserTaxFirms<
+  TData = Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
   TError = AxiosError<GetTaxFirmResponse[]>,
 >(
-  userId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof getApiV1StaffUserUserIdTaxFirms>>,
+        Awaited<ReturnType<typeof getApiV1UserTaxFirms>>,
         TError,
         TData
       >
@@ -684,10 +662,157 @@ export function useGetApiV1StaffUserUserIdTaxFirms<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getGetApiV1StaffUserUserIdTaxFirmsQueryOptions(
-    userId,
-    options,
-  );
+  const queryOptions = getGetApiV1UserTaxFirmsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getApiV1TaxFirms = (
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<GetAllTaxFirmResponseListErrorOr>> => {
+  return axios.get(`/api/v1/TaxFirms`, options);
+};
+
+export const getGetApiV1TaxFirmsUrl = () => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/TaxFirms`,
+      baseURL: "",
+    });
+};
+
+export const getGetApiV1TaxFirmsQueryKey = () => {
+  return [`/api/v1/TaxFirms`] as const;
+};
+
+export const getGetApiV1TaxFirmsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+  TError = AxiosError<GetAllTaxFirmResponse[]>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof getApiV1TaxFirms>>, TError, TData>
+  >;
+  axios?: AxiosRequestConfig;
+}) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetApiV1TaxFirmsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getApiV1TaxFirms>>
+  > = ({ signal }) => getApiV1TaxFirms({ signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1TaxFirmsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getApiV1TaxFirms>>
+>;
+export type GetApiV1TaxFirmsQueryError = AxiosError<GetAllTaxFirmResponse[]>;
+
+export function useGetApiV1TaxFirms<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+  TError = AxiosError<GetAllTaxFirmResponse[]>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TaxFirms>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirms<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+  TError = AxiosError<GetAllTaxFirmResponse[]>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TaxFirms>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirms<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+  TError = AxiosError<GetAllTaxFirmResponse[]>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetApiV1TaxFirms<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+  TError = AxiosError<GetAllTaxFirmResponse[]>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirms>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetApiV1TaxFirmsQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

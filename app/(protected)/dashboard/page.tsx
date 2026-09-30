@@ -11,12 +11,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { GetTaxFirmResponse } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
 import { useDashboardStore } from "@/modules/dashboard/store/dashboard.store";
 import { Edit, Trash } from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardPage() {
-  const { stats, recentCases, getStatusVariant, getStageVariant } =
-    useDashboardStore();
+  const { stats } = useDashboardStore();
+  const { taxFirms, isLoading } = useGetTaxFirms();
+  console.log("taxFirms", taxFirms);
 
   return (
     <div className="space-y-8">
@@ -37,11 +41,13 @@ export default function DashboardPage() {
         </CardHeader>
       </Card> */}
 
-      <Card className=" border-0 rounded-lg text-white p-3 flex flex-row space-x-3 ">
-        <Button>Add Tax Firm</Button>
-        <Button>Add a contact</Button>
-        <Button>Log an Activity</Button>
-        <Button>View Tax Firms</Button>
+      <Card className=" border-0 rounded-lg text-white p-3 grid grid-cols-2  lg:grid-cols-4 gap-3">
+        <Link href="/crm/addTaxFirm" className="col-span-1">
+          <Button className="w-full">Add Tax Firm</Button>
+        </Link>
+        <Button className="col-span-1">Add a contact</Button>
+        <Button className="col-span-1">Log an Activity</Button>
+        <Button className="col-span-1">View Tax Firms</Button>
       </Card>
 
       {/* Stats Grid */}
@@ -82,13 +88,13 @@ export default function DashboardPage() {
             <thead className="bg-muted border-b border-border">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-foreground uppercase tracking-wider">
-                  Client
+                  Firm Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-foreground uppercase tracking-wider">
-                  Type
+                  Address
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-foreground uppercase tracking-wider">
-                  Stage
+                  Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-foreground uppercase tracking-wider">
                   Status
@@ -99,49 +105,64 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {recentCases.map((caseItem) => (
-                <tr key={caseItem.id} className="hover:bg-muted/50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {caseItem.client}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {caseItem.type}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant={getStageVariant(caseItem.stage)}>
-                      {caseItem.stage}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant={getStatusVariant(caseItem.status)}>
-                      {caseItem.status}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                    >
-                      <Edit size={16} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                    >
-                      <Trash
-                        size={16}
-                        className="text-destructive hover:text-red-800 hover:bg-red-50"
-                      />
-                    </Button>
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-4 text-center text-muted-foreground"
+                  >
+                    Loading tax firms...
                   </td>
                 </tr>
-              ))}
+              ) : taxFirms?.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-4 text-center text-muted-foreground"
+                  >
+                    No tax firms added yet
+                  </td>
+                </tr>
+              ) : (
+                taxFirms.map((firm: GetTaxFirmResponse) => (
+                  <tr key={firm.taxFirmId} className="hover:bg-muted/50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {firm.firmName}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      {firm.address}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge variant="secondary">{firm.mainPhoneNumber}</Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge variant={firm.isActive ? "default" : "outline"}>
+                        {firm.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                      >
+                        <Edit size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                      >
+                        <Trash size={16} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -28,7 +28,6 @@ export const PUBLIC_ROUTES = ["/", "/api"];
 export const AUTH_ROUTES = [
   "/login",
   "/forgot-password",
-  "/forgotpassword",
   "/reset",
   "/reset-password",
   "/signup",

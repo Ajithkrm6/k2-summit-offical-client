@@ -204,27 +204,33 @@ export const useLogout = () => {
  * - Manages loading/error states
  */
 export const useForgotPassword = () => {
-  const { setError, setLoading, clearError } = useAuthStore();
+  const { setError, setLoading, clearError, setSuccess, isSuccess } =
+    useAuthStore();
 
   const { mutate, ...rest } = usePostApiV1UserForgotPassword({
     mutation: {
       onMutate: () => {
         setLoading(true);
         clearError();
+        setSuccess(false);
       },
       onSuccess: () => {
         console.log("Password reset email sent successfully");
+        console.log("Sending password reset email...", isSuccess);
         toast.add({
           title: "Email sent",
           description: "Password reset email has been sent to your inbox.",
           type: "success",
         });
+        setSuccess(true);
+        console.log("Sent password reset email...", isSuccess);
       },
       onError: (error: AxiosError) => {
         const errorMessage = getErrorMessage(
           error,
           "Failed to send password reset email",
         );
+        setSuccess(false);
         setError(errorMessage);
         toast.add({
           title: "Failed to send email",
@@ -241,7 +247,8 @@ export const useForgotPassword = () => {
 
   return {
     sendResetEmail: (data: ForgotPasswordRequest) => mutate({ data }),
-    ...rest,
+    isSuccess,
+    isPending: rest.isPending,
   };
 };
 

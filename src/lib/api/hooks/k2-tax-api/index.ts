@@ -6,5 +6,6 @@
  */
 
 // Auth hooks
+export type * as AddTaxFirmTypes from "./useAddTaxFirm";
 export type * as AuthTypes from "./useAuth";
 export type * as UsersTypes from "./useUsers";

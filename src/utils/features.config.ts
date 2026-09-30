@@ -11,7 +11,8 @@ export type FeatureModuleKey =
   | "clients.management"
   | "strategy.report-generator"
   | "documents.reference"
-  | "admin.settings";
+  | "admin.settings"
+  | "crm.addTaxFirm";
 
 export const FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
   "ops.dashboard": true,
@@ -22,4 +23,5 @@ export const FEATURE_MODULES: Record<FeatureModuleKey, boolean> = {
   "strategy.report-generator": true,
   "documents.reference": true,
   "admin.settings": true,
+  "crm.addTaxFirm": true,
 };
