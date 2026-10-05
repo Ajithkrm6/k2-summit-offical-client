@@ -14,6 +14,8 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/lib/api/hooks/k2-tax-api/useAuth";
 import { featureGate } from "@/utils/feature-gate";
@@ -252,6 +254,7 @@ const BADGE_VARIANT_MAP: Record<
 export function NavigationSidebar() {
   const pathname = usePathname();
   const { logout, isPending } = useLogout();
+  const { setOpenMobile } = useSidebar();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Auto-expand menu items based on current pathname
@@ -342,6 +345,7 @@ export function NavigationSidebar() {
                       render={<Link href={item.href || "/"} />}
                       isActive={isItemActive(item.href)}
                       className="relative w-full justify-start"
+                      onClick={() => setOpenMobile(false)}
                     >
                       {item.icon}
                       <span>{item.label}</span>
@@ -406,6 +410,7 @@ export function NavigationSidebar() {
                             render={<Link href={subitem.href || "/"} />}
                             href={subitem.href}
                             isActive={isItemActive(subitem.href)}
+                            onClick={() => setOpenMobile(false)}
                           >
                             <div className="flex items-center justify-between w-full">
                               <span>{subitem.label}</span>
@@ -443,6 +448,7 @@ export function NavigationSidebar() {
           <LogOut className="w-4 h-4 mr-2" />
         </Button>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }

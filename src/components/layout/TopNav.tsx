@@ -66,7 +66,7 @@ export function TopNav(): React.ReactElement {
         {/* Left Section - Menu Toggle */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
           {/* Mobile Menu Toggle - Using native shadcn SidebarTrigger */}
-          <SidebarTrigger className="md:hidden" />
+          <SidebarTrigger />
         </div>
 
         {/* Right Section - Notifications & User Menu */}
