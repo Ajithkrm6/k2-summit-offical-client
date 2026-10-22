@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
+import { useSearchParams } from "next/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,17 +13,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CreateTaxFirmRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
-import { useAddTaxFirm } from "@/lib/api/hooks/k2-tax-api/useAddTaxFirm";
-import { CreateTaxFirmFormData, createTaxFirmSchema } from "@/modules/crm/lib";
-import { useCRMStore } from "@/modules/crm/store/crm.store";
+import { useAddContact } from "@/lib/api/hooks/k2-tax-api/useAddContact";
+import type { CreateTaxFirmContactRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { CreateContactFormData, createContactSchema } from "@/modules/crm/lib";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
-export const AddFirmCRM = () => {
-  const { addTaxFirm, isPending, isSuccess } = useAddTaxFirm();
-  const { error, setSuccess } = useCRMStore();
+export const AddContact = () => {
+  const searchParams = useSearchParams();
+  const taxFirmId = searchParams.get("firmId") || "";
+  const firmName = searchParams.get("firmName") || "Unknown Firm";
+
+  const { addContact, isPending, isSuccess, error } = useAddContact({
+    taxFirmId,
+  });
+
   const {
     handleSubmit,
     register,
@@ -31,108 +36,110 @@ export const AddFirmCRM = () => {
     reset,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(createTaxFirmSchema),
-    defaultValues: {} as CreateTaxFirmFormData,
+    resolver: zodResolver(createContactSchema),
+    defaultValues: {} as CreateContactFormData,
   });
 
-  const onSubmit = (data: CreateTaxFirmFormData) => {
-    addTaxFirm(data as CreateTaxFirmRequest);
+  const onSubmit = (data: CreateContactFormData) => {
+    addContact(data as CreateTaxFirmContactRequest);
   };
 
-  // Auto-clear form after successful submission
   useEffect(() => {
     if (isSuccess && !isPending) {
       reset();
-      setSuccess(false);
     }
-  }, [isSuccess, isPending, reset, setSuccess]);
+  }, [isSuccess, isPending, reset]);
 
-  const items = [
-    { label: "Select a firm type", value: null },
-    { label: "firm type 1", value: "apple", id: 1 },
-    { label: "firm type 2", value: "banana", id: 2 },
-    { label: "firm type 3", value: "blueberry", id: 3 },
-    { label: "firm type 4", value: "grapes", id: 4 },
-    { label: "firm type 5", value: "pineapple", id: 5 },
+  const roleOptions = [
+    { label: "Select a role...", value: null },
+    { label: "Owner", value: 1 },
+    { label: "Manager", value: 2 },
+    { label: "Staff", value: 3 },
+    { label: "Accountant", value: 4 },
   ];
+
+  const contactMethodOptions = [
+    { label: "Select a method...", value: null },
+    { label: "Email", value: 1 },
+    { label: "Phone", value: 2 },
+    { label: "Cell Phone", value: 3 },
+  ];
+
+  if (!taxFirmId) {
+    return (
+      <div className="p-4 bg-white rounded-lg">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Invalid access. Missing firm ID. Please select a firm first.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 space-y-3 min-h-screen bg-white rounded-lg">
-      <h1>Add a Contact</h1>
-      <p>
-        Linked to Firm ID {`${122}`}. Only one contact can be designated as the
-        primary contact for each firm.
-      </p>
+      <div>
+        <h1 className="text-2xl font-bold">Add a Contact</h1>
+        <p className="text-gray-600 text-sm">
+          Linked to Firm ID <strong>{taxFirmId}</strong> — {firmName}. Only one
+          contact can be designated as the Primary Contact for each firm.
+        </p>
+      </div>
 
       {error && (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
 
-      {/* form */}
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
+        <div className="space-y-6">
+          <div className="bg-gray-50 p-4 rounded border">
+            <Label className="text-sm font-medium">Firm ID</Label>
+            <p className="text-sm font-semibold">
+              {taxFirmId} — {firmName}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firmName">Firm Name</Label>
-              <Input {...register("firmName")} id="firmName" />
-              {errors.firmName && (
-                <p className="text-red-500">{errors.firmName.message}</p>
+              <Label htmlFor="firstName">First Name *</Label>
+              <Input
+                {...register("firstName")}
+                id="firstName"
+                placeholder="John"
+              />
+              {errors.firstName && (
+                <p className="text-red-500 text-sm">
+                  {errors.firstName.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="firmTypeId">Firm Type</Label>
-              <Controller
-                name="firmTypeId"
-                control={control}
-                render={({ field }) => {
-                  const selectedItem = items.find(
-                    (item) => item.id === field.value,
-                  );
-                  return (
-                    <Select
-                      onValueChange={(value) =>
-                        field.onChange(value ? Number(value) : undefined)
-                      }
-                      value={field.value?.toString() || ""}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a firm type">
-                          {selectedItem?.label}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Firm Types</SelectLabel>
-                          {items.map((item) => (
-                            <SelectItem
-                              key={item.id || item.value}
-                              value={(item.id || "").toString()}
-                            >
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  );
-                }}
+              <Label htmlFor="lastName">Last Name *</Label>
+              <Input
+                {...register("lastName")}
+                id="lastName"
+                placeholder="Doe"
               />
-              {errors.firmTypeId && (
-                <p className="text-red-500">{errors.firmTypeId.message}</p>
+              {errors.lastName && (
+                <p className="text-red-500 text-sm">
+                  {errors.lastName.message}
+                </p>
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="credentialTypeId">Credentials</Label>
+              <Label htmlFor="roleTitleTypeId">Role / Title *</Label>
               <Controller
-                name="credentialTypeId"
+                name="roleTitleTypeId"
                 control={control}
                 render={({ field }) => {
-                  const selectedItem = items.find(
-                    (item) => item.id === field.value,
+                  const selectedItem = roleOptions.find(
+                    (item) => item.value === field.value,
                   );
                   return (
                     <Select
@@ -142,17 +149,17 @@ export const AddFirmCRM = () => {
                       value={field.value?.toString() || ""}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select credentials">
+                        <SelectValue placeholder="Select a role">
                           {selectedItem?.label}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectLabel>Credentials</SelectLabel>
-                          {items.map((item) => (
+                          <SelectLabel>Roles</SelectLabel>
+                          {roleOptions.map((item) => (
                             <SelectItem
-                              key={item.id || item.value}
-                              value={(item.id || "").toString()}
+                              key={item.value || "null"}
+                              value={(item.value || "").toString()}
                             >
                               {item.label}
                             </SelectItem>
@@ -163,20 +170,66 @@ export const AddFirmCRM = () => {
                   );
                 }}
               />
-              {errors.credentialTypeId && (
-                <p className="text-red-500">
-                  {errors.credentialTypeId.message}
+              {errors.roleTitleTypeId && (
+                <p className="text-red-500 text-sm">
+                  {errors.roleTitleTypeId.message}
                 </p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="leadStatusTypeId">Load Status</Label>
+              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Input
+                {...register("phoneNumber")}
+                id="phoneNumber"
+                placeholder="(555) 123-4567"
+              />
+              {errors.phoneNumber && (
+                <p className="text-red-500 text-sm">
+                  {errors.phoneNumber.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="cellPhone">Cell Phone?</Label>
+              <Input
+                {...register("cellPhone")}
+                id="cellPhone"
+                placeholder="(555) 987-6543"
+              />
+              {errors.cellPhone && (
+                <p className="text-red-500 text-sm">
+                  {errors.cellPhone.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                {...register("email")}
+                id="email"
+                type="email"
+                placeholder="john.doe@example.com"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="preferredContactMethodTypeId">
+                Preferred Contact Method
+              </Label>
               <Controller
-                name="leadStatusTypeId"
+                name="preferredContactMethodTypeId"
                 control={control}
                 render={({ field }) => {
-                  const selectedItem = items.find(
-                    (item) => item.id === field.value,
+                  const selectedItem = contactMethodOptions.find(
+                    (item) => item.value === field.value,
                   );
                   return (
                     <Select
@@ -186,17 +239,17 @@ export const AddFirmCRM = () => {
                       value={field.value?.toString() || ""}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select status">
+                        <SelectValue placeholder="Select a method">
                           {selectedItem?.label}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectLabel>Status</SelectLabel>
-                          {items.map((item) => (
+                          <SelectLabel>Contact Methods</SelectLabel>
+                          {contactMethodOptions.map((item) => (
                             <SelectItem
-                              key={item.id || item.value}
-                              value={(item.id || "").toString()}
+                              key={item.value || "null"}
+                              value={(item.value || "").toString()}
                             >
                               {item.label}
                             </SelectItem>
@@ -207,201 +260,68 @@ export const AddFirmCRM = () => {
                   );
                 }}
               />
-              {errors.leadStatusTypeId && (
-                <p className="text-red-500">
-                  {errors.leadStatusTypeId.message}
+              {errors.preferredContactMethodTypeId && (
+                <p className="text-red-500 text-sm">
+                  {errors.preferredContactMethodTypeId.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bestTimeToReach">Best Time to Reach</Label>
+              <Input
+                {...register("bestTimeToReach")}
+                id="bestTimeToReach"
+                placeholder="9 AM - 5 PM EST"
+              />
+              {errors.bestTimeToReach && (
+                <p className="text-red-500 text-sm">
+                  {errors.bestTimeToReach.message}
                 </p>
               )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <Input {...register("address")} id="address" />
-            {errors.address && (
-              <p className="text-red-500">{errors.address.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="websiteUrl">Url</Label>
-              <Input {...register("websiteUrl")} id="websiteUrl" />
-              {errors.websiteUrl && (
-                <p className="text-red-500">{errors.websiteUrl.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mainPhoneNumber">Main Phone number</Label>
-              <Input {...register("mainPhoneNumber")} id="mainPhoneNumber" />
-              {errors.mainPhoneNumber && (
-                <p className="text-red-500">{errors.mainPhoneNumber.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="numberOfOffices">No of Offices</Label>
-              <Input
-                {...register("numberOfOffices")}
-                id="numberOfOffices"
-                type="number"
+            <div className="flex items-center space-x-2">
+              <input
+                {...register("isPrimaryContact")}
+                id="isPrimaryContact"
+                type="checkbox"
+                className="w-4 h-4"
               />
-              {errors.numberOfOffices && (
-                <p className="text-red-500">{errors.numberOfOffices.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="numberOfTaxClients">No of Tax Clients</Label>
-              <Input
-                {...register("numberOfTaxClients")}
-                id="numberOfTaxClients"
-                type="number"
-              />
-              {errors.numberOfTaxClients && (
-                <p className="text-red-500">
-                  {errors.numberOfTaxClients.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="estimatedAnnualRevenue">
-                Estimated Annual Revenue
+              <Label htmlFor="isPrimaryContact" className="cursor-pointer">
+                Primary Contact?
               </Label>
-              <Input
-                {...register("estimatedAnnualRevenue")}
-                id="estimatedAnnualRevenue"
-                type="number"
-              />
-              {errors.estimatedAnnualRevenue && (
-                <p className="text-red-500">
-                  {errors.estimatedAnnualRevenue.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="employeeCount">Employee Count</Label>
-              <Input
-                {...register("employeeCount")}
-                id="employeeCount"
-                type="number"
-              />
-              {errors.employeeCount && (
-                <p className="text-red-500">{errors.employeeCount.message}</p>
-              )}
-            </div>
-          </div>
-          <div>
-            <div className="space-y-2">
-              <Label htmlFor="currentSoftware">Current Software</Label>
-              <Input {...register("currentSoftware")} id="currentSoftware" />
-              {errors.currentSoftware && (
-                <p className="text-red-500">{errors.currentSoftware.message}</p>
-              )}
-            </div>
-          </div>
-          <div>
-            <span>Services Offered</span>
-            <div>
-              <Controller
-                name="servicesOffered"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    id="servicesOffered"
-                    checked={!!field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                )}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="leadSource">Lead Source</Label>
-              <Controller
-                name="leadSource"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Lead Sources</SelectLabel>
-                        {items.map((item) => (
-                          <SelectItem
-                            key={item.id || item.value}
-                            value={item.value || ""}
-                          >
-                            {item.label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.leadSource && (
-                <p className="text-red-500">{errors.leadSource.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="referralSource">Referral Source</Label>
-              <Input {...register("referralSource")} id="referralSource" />
-              {errors.referralSource && (
-                <p className="text-red-500">{errors.referralSource.message}</p>
-              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="potentialDealSize">Potential deal size</Label>
-              <Input
-                {...register("potentialDealSize")}
-                id="potentialDealSize"
-                type="number"
-              />
-              {errors.potentialDealSize && (
-                <p className="text-red-500">
-                  {errors.potentialDealSize.message}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="competitorInUse">Competitor in use</Label>
-              <Input {...register("competitorInUse")} id="competitorInUse" />
-              {errors.competitorInUse && (
-                <p className="text-red-500">{errors.competitorInUse.message}</p>
-              )}
-            </div>
-          </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
-            <Input {...register("notes")} id="notes" />
+            <textarea
+              {...register("notes")}
+              id="notes"
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Any additional notes..."
+              rows={4}
+            />
             {errors.notes && (
-              <p className="text-red-500">{errors.notes.message}</p>
+              <p className="text-red-500 text-sm">{errors.notes.message}</p>
             )}
           </div>
-        </div>
-        <div className="flex flex-row justify-end items-center space-x-2 mt-3">
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Adding..." : "Submit"}
-          </Button>
-          <Button type="button" variant="outline">
-            Cancel
-          </Button>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => reset()}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Saving..." : "Save Contact"}
+            </Button>
+          </div>
         </div>
       </form>
     </div>

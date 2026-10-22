@@ -8,4 +8,8 @@
 // Auth hooks
 export type * as AddTaxFirmTypes from "./useAddTaxFirm";
 export type * as AuthTypes from "./useAuth";
+export { useAddContact } from "./useAddContact";
+export type * as AddContactTypes from "./useAddContact";
+export { useUploadDocuments } from "./useUploadDocuments";
+export type * as UploadDocumentsTypes from "./useUploadDocuments";
 export type * as UsersTypes from "./useUsers";

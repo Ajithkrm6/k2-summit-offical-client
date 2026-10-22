@@ -4,6 +4,33 @@
  * K2 Tax API
  * OpenAPI spec version: v1
  */
+export interface ContactMethodTypeResponse {
+  contactMethodTypeId?: number;
+  /** @nullable */
+  contactMethodTypeName?: string | null;
+  /** @nullable */
+  description?: string | null;
+  isDeleted?: boolean;
+}
+
+export interface ContactRelationshipTypeResponse {
+  contactRelationshipTypeId?: number;
+  /** @nullable */
+  contactRelationShipTypeName?: string | null;
+  /** @nullable */
+  description?: string | null;
+  isActive?: boolean;
+}
+
+export interface ContactTypeResponse {
+  contactTypeId?: number;
+  /** @nullable */
+  contactTypeName?: string | null;
+  /** @nullable */
+  description?: string | null;
+  isActive?: boolean;
+}
+
 export interface CreateAddressRequest {
   /** @nullable */
   taxFirmId?: string | null;
@@ -285,6 +312,18 @@ export interface CreateTaxPersonClientResponseErrorOr {
   firstError?: Error;
 }
 
+export interface CredentialsTypeResponse {
+  credentialTypeId?: number;
+  /** @nullable */
+  name?: string | null;
+}
+
+export interface FirmTypeResponse {
+  firmTypeId?: number;
+  /** @nullable */
+  name?: string | null;
+}
+
 export interface ForgotPasswordRequest {
   /** @nullable */
   email?: string | null;
@@ -381,6 +420,12 @@ export interface GetTaxFirmResponseListErrorOr {
   firstError?: Error;
 }
 
+export interface LeadStatusTypeResponse {
+  leadStatusTypeId?: number;
+  /** @nullable */
+  name?: string | null;
+}
+
 export interface LoginRequest {
   /** @nullable */
   email?: string | null;
@@ -417,6 +462,31 @@ export interface LogoutUserResponseErrorOr {
   /** @nullable */
   readonly errorsOrEmptyList?: readonly Error[] | null;
   value?: LogoutUserResponse;
+  firstError?: Error;
+}
+
+export interface LookupResponse {
+  /** @nullable */
+  contactTypes?: ContactTypeResponse[] | null;
+  /** @nullable */
+  contactMethodTypes?: ContactMethodTypeResponse[] | null;
+  /** @nullable */
+  contactRelationshipTypes?: ContactRelationshipTypeResponse[] | null;
+  /** @nullable */
+  firmTypes?: FirmTypeResponse[] | null;
+  /** @nullable */
+  credentialsTypes?: CredentialsTypeResponse[] | null;
+  /** @nullable */
+  leadStatusTypes?: LeadStatusTypeResponse[] | null;
+}
+
+export interface LookupResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: LookupResponse;
   firstError?: Error;
 }
 
@@ -640,6 +710,39 @@ export interface UpdateTaxPersonClientResponseErrorOr {
   firstError?: Error;
 }
 
+export interface UploadedDocuments {
+  documentId?: string;
+  /** @nullable */
+  fileName?: string | null;
+  /** @nullable */
+  storageUri?: string | null;
+  /** @nullable */
+  mimeType?: string | null;
+  /** @nullable */
+  version?: number | null;
+  /** @nullable */
+  taxYear?: number | null;
+  /** @nullable */
+  extractionStatus?: string | null;
+}
+
+export interface UploadClientDocumentsResult {
+  /** @nullable */
+  taxPersonClientId?: string | null;
+  /** @nullable */
+  message?: string | null;
+  /** @nullable */
+  uploadedDocuments?: UploadedDocuments[] | null;
+}
+
 export type PostApiV1TaxFirmTaxfirmidLogActivityParams = {
   contactid?: string;
+};
+
+export type PostApiV1ClientDocumentsBody = {
+  TaxPersonClientId: string;
+  FormType: string;
+  TaxYear: number;
+  Version: number;
+  Documents: (Blob | File)[];
 };

@@ -21,8 +21,11 @@ import { useLogout } from "@/lib/api/hooks/k2-tax-api/useAuth";
 import { featureGate } from "@/utils/feature-gate";
 import type { FeatureModuleKey } from "@/utils/features.config";
 import {
+  Activity,
   Briefcase,
   ChevronDown,
+  Contact,
+  FilePlusCornerIcon,
   FileText,
   Home,
   LogOut,
@@ -38,6 +41,7 @@ import { useMemo, useState } from "react";
 interface SubmenuItem {
   label: string;
   href: string;
+  icon?: React.ReactNode;
   badge?: string;
   featureGate?: FeatureModuleKey;
   badgeVariant?:
@@ -52,7 +56,7 @@ interface SubmenuItem {
 }
 
 interface NavItem {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   label: string;
   href?: string;
   badge?: string;
@@ -101,21 +105,30 @@ const NAV_ITEMS: NavItem[] = [
     badgeVariant: "default",
     submenu: [
       {
+        icon: <Users className="w-5 h-5" />,
         label: "New Tax Firm ",
         href: "/crm/addTaxFirm",
         featureGate: "crm.addTaxFirm",
         badgeVariant: "beta-s1",
       },
       {
+        icon: <Contact className="w-5 h-5" />,
         label: "Add Contact",
+        href: "/crm/addContact",
+        featureGate: "crm.addContact",
+      },
+      {
+        icon: <Activity className="w-5 h-5" />,
+        label: "Log an Activity",
         href: "/workpool/intake",
         featureGate: "workpool.intake",
         badgeVariant: "beta-s1",
       },
       {
-        label: "Log an Activity",
-        href: "/workpool/intake",
-        featureGate: "workpool.intake",
+        icon: <FilePlusCornerIcon className="w-5 h-5" />,
+        label: "Document Central",
+        href: "/crm/documentsCentral",
+        featureGate: "crm.document-central",
         badgeVariant: "beta-s1",
       },
     ],
@@ -347,7 +360,7 @@ export function NavigationSidebar() {
                       className="relative w-full justify-start"
                       onClick={() => setOpenMobile(false)}
                     >
-                      {item.icon}
+                      {item.icon && <>{item.icon}</>}
                       <span>{item.label}</span>
                       {item.badge && (
                         <Badge
@@ -380,7 +393,7 @@ export function NavigationSidebar() {
                     className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      {item.icon}
+                      {item.icon && <>{item.icon}</>}
                       <span>{item.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -413,7 +426,10 @@ export function NavigationSidebar() {
                             onClick={() => setOpenMobile(false)}
                           >
                             <div className="flex items-center justify-between w-full">
-                              <span>{subitem.label}</span>
+                              <div className="flex items-center gap-2">
+                                {subitem.icon && <>{subitem.icon}</>}
+                                <span>{subitem.label}</span>
+                              </div>
                               {subitem.badge && (
                                 <Badge
                                   variant={

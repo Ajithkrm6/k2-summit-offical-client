@@ -19,10 +19,12 @@ import type {
   CreateTaxPersonClientRequest,
   CreateTaxPersonClientResponse,
   CreateTaxPersonClientResponseErrorOr,
+  PostApiV1ClientDocumentsBody,
   ProblemDetails,
   UpdateTaxPersonClientRequest,
   UpdateTaxPersonClientResponse,
   UpdateTaxPersonClientResponseErrorOr,
+  UploadClientDocumentsResult,
 } from "../k2TaxAPI.schemas";
 
 export const postApiV1TaxFirmTaxfirmidTaxPersonClient = (
@@ -245,6 +247,123 @@ export const usePutApiV1TaxFirmTaxFirmIdClientClientId = <
 > => {
   return useMutation(
     getPutApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions(options),
+    queryClient,
+  );
+};
+export const postApiV1ClientDocuments = (
+  postApiV1ClientDocumentsBody?: PostApiV1ClientDocumentsBody,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<UploadClientDocumentsResult[]>> => {
+  const formData = new FormData();
+  if (postApiV1ClientDocumentsBody?.TaxPersonClientId !== undefined) {
+    formData.append(
+      `TaxPersonClientId`,
+      postApiV1ClientDocumentsBody.TaxPersonClientId,
+    );
+  }
+  if (postApiV1ClientDocumentsBody?.FormType !== undefined) {
+    formData.append(`FormType`, postApiV1ClientDocumentsBody.FormType);
+  }
+  if (postApiV1ClientDocumentsBody?.TaxYear !== undefined) {
+    formData.append(`TaxYear`, postApiV1ClientDocumentsBody.TaxYear.toString());
+  }
+  if (postApiV1ClientDocumentsBody?.Version !== undefined) {
+    formData.append(`Version`, postApiV1ClientDocumentsBody.Version.toString());
+  }
+  if (postApiV1ClientDocumentsBody?.Documents !== undefined) {
+    postApiV1ClientDocumentsBody?.Documents.forEach((value) =>
+      formData.append(`Documents`, value),
+    );
+  }
+
+  return axios.post(`/api/v1/Client/Documents`, formData, options);
+};
+
+export const getPostApiV1ClientDocumentsUrl = () => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/Client/Documents`,
+      baseURL: "",
+    });
+};
+
+export const getPostApiV1ClientDocumentsMutationKey = () =>
+  ["postApiV1ClientDocuments"] as const;
+
+export const getPostApiV1ClientDocumentsMutationOptions = <
+  TError = AxiosError<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof postApiV1ClientDocuments>>,
+    TError,
+    PostApiV1ClientDocumentsMutationVariables,
+    TContext
+  >;
+  axios?: AxiosRequestConfig;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof postApiV1ClientDocuments>>,
+  TError,
+  PostApiV1ClientDocumentsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPostApiV1ClientDocumentsMutationKey();
+  const { mutation: mutationOptions, axios: axiosOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, axios: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof postApiV1ClientDocuments>>,
+    PostApiV1ClientDocumentsMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return postApiV1ClientDocuments(data, axiosOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PostApiV1ClientDocumentsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postApiV1ClientDocuments>>
+>;
+export type PostApiV1ClientDocumentsMutationBody =
+  PostApiV1ClientDocumentsBody | undefined;
+export type PostApiV1ClientDocumentsMutationError = AxiosError<ProblemDetails>;
+export type PostApiV1ClientDocumentsMutationVariables = {
+  data?: PostApiV1ClientDocumentsBody;
+};
+
+export const usePostApiV1ClientDocuments = <
+  TError = AxiosError<ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof postApiV1ClientDocuments>>,
+      TError,
+      PostApiV1ClientDocumentsMutationVariables,
+      TContext
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof postApiV1ClientDocuments>>,
+  TError,
+  PostApiV1ClientDocumentsMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getPostApiV1ClientDocumentsMutationOptions(options),
     queryClient,
   );
 };

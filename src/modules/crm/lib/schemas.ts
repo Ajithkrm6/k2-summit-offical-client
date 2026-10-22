@@ -2,7 +2,7 @@ import * as z from "zod";
 
 /**
  * CRM Module Schemas
- * Zod validation schemas for Tax Firm operations
+ * Zod validation schemas for Tax Firm and Document operations
  */
 
 // ============================================================================
@@ -98,6 +98,63 @@ export const createTaxFirmSchema = z.object({
     .optional(),
 });
 
+// ============================================================================
+// Tax Firm Contact Schemas
+// ============================================================================
+
+export const createContactSchema = z.object({
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .max(255, "First name cannot exceed 255 characters")
+    .nullable()
+    .optional(),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .max(255, "Last name cannot exceed 255 characters")
+    .nullable()
+    .optional(),
+  roleTitleTypeId: z.number().int().optional(),
+  phoneNumber: z
+    .string()
+    .regex(/^[\d\-\+\(\)\s]*$/, "Invalid phone number")
+    .nullable()
+    .optional(),
+  cellPhone: z
+    .string()
+    .regex(/^[\d\-\+\(\)\s]*$/, "Invalid cell phone")
+    .nullable()
+    .optional(),
+  email: z.string().email("Invalid email address").nullable().optional(),
+  preferredContactMethodTypeId: z.number().int().nullable().optional(),
+  bestTimeToReach: z
+    .string()
+    .max(500, "Best time to reach cannot exceed 500 characters")
+    .nullable()
+    .optional(),
+  isPrimaryContact: z.boolean().optional(),
+  notes: z
+    .string()
+    .max(1000, "Notes cannot exceed 1000 characters")
+    .nullable()
+    .optional(),
+});
+
+// ============================================================================
+// Document Upload Schemas
+// ============================================================================
+
+export const uploadDocumentsSchema = z.object({
+  taxPersonClientId: z.string().min(1, "Client is required"),
+  taxYear: z
+    .number()
+    .int()
+    .min(1900, "Invalid tax year")
+    .max(new Date().getFullYear() + 1, "Tax year cannot be in the future"),
+  formType: z.string().min(1, "Document type is required"),
+});
+
 export const updateTaxFirmSchema = createTaxFirmSchema;
 
 export const getTaxFirmSchema = createTaxFirmSchema.extend({
@@ -116,5 +173,7 @@ export const getTaxFirmSchema = createTaxFirmSchema.extend({
 // ============================================================================
 
 export type CreateTaxFirmFormData = z.infer<typeof createTaxFirmSchema>;
+export type CreateContactFormData = z.infer<typeof createContactSchema>;
 export type UpdateTaxFirmFormData = z.infer<typeof updateTaxFirmSchema>;
 export type GetTaxFirmData = z.infer<typeof getTaxFirmSchema>;
+export type UploadDocumentsFormData = z.infer<typeof uploadDocumentsSchema>;
