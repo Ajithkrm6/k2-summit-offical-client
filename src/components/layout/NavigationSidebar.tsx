@@ -26,7 +26,6 @@ import {
   ChevronDown,
   Contact,
   FilePlusCornerIcon,
-  FileText,
   Home,
   LogOut,
   ScrollText,
@@ -120,7 +119,7 @@ const NAV_ITEMS: NavItem[] = [
       {
         icon: <Activity className="w-5 h-5" />,
         label: "Log an Activity",
-        href: "/workpool/intake",
+        href: "/comingsoon",
         featureGate: "workpool.intake",
         badgeVariant: "beta-s1",
       },
@@ -141,19 +140,19 @@ const NAV_ITEMS: NavItem[] = [
     submenu: [
       {
         label: "Client Intake",
-        href: "/workpool/intake",
+        href: "/comingsoon",
         featureGate: "workpool.intake",
         badgeVariant: "beta-s1",
       },
       {
         label: "Returns Queue",
-        href: "/workpool/labor-prep",
+        href: "/comingsoon",
         featureGate: "workpool.labor-prep",
         badgeVariant: "beta-s1",
       },
       {
         label: "QC Review",
-        href: "/workpool/qc",
+        href: "/comingsoon",
         featureGate: "workpool.qc-review",
         badgeVariant: "beta-s2",
         badge: "S2",
@@ -168,19 +167,19 @@ const NAV_ITEMS: NavItem[] = [
     submenu: [
       {
         label: "Client Directory",
-        href: "/clients/directory",
+        href: "/comingsoon",
         featureGate: "clients.management",
         badgeVariant: "default",
       },
       {
         label: "Client Profiles",
-        href: "/clients/profiles",
+        href: "/comingsoon",
         featureGate: "clients.management",
         badgeVariant: "default",
       },
       {
         label: "Add New Client",
-        href: "/clients/add",
+        href: "/comingsoon",
         featureGate: "clients.management",
         badgeVariant: "default",
       },
@@ -195,46 +194,46 @@ const NAV_ITEMS: NavItem[] = [
     submenu: [
       {
         label: "Report Generator",
-        href: "/strategy?tab=report",
+        href: "/comingsoon",
         featureGate: "strategy.report-generator",
         badgeVariant: "pro",
       },
       {
         label: "Tax Planning",
-        href: "/strategy?tab=planning",
+        href: "/comingsoon",
         featureGate: "strategy.report-generator",
         badgeVariant: "pro",
       },
       {
         label: "Client Analysis",
-        href: "/strategy?tab=analysis",
+        href: "/comingsoon",
         featureGate: "strategy.report-generator",
         badgeVariant: "pro",
       },
     ],
   },
-  {
-    icon: <FileText className="w-5 h-5" />,
-    label: "Documents",
-    featureGate: "documents.reference",
-    submenu: [
-      {
-        label: "Reference Library",
-        href: "/documents?tab=library",
-        featureGate: "documents.reference",
-      },
-      {
-        label: "Document Repository",
-        href: "/documents?tab=repository",
-        featureGate: "documents.reference",
-      },
-      {
-        label: "Upload & Manage",
-        href: "/documents?tab=upload",
-        featureGate: "documents.reference",
-      },
-    ],
-  },
+  // {
+  //   icon: <FileText className="w-5 h-5" />,
+  //   label: "Documents",
+  //   featureGate: "documents.reference",
+  //   submenu: [
+  //     {
+  //       label: "Reference Library",
+  //       href: "/documents?tab=library",
+  //       featureGate: "documents.reference",
+  //     },
+  //     {
+  //       label: "Document Repository",
+  //       href: "/documents?tab=repository",
+  //       featureGate: "documents.reference",
+  //     },
+  //     {
+  //       label: "Upload & Manage",
+  //       href: "/documents?tab=upload",
+  //       featureGate: "documents.reference",
+  //     },
+  //   ],
+  // },
   {
     icon: <Settings className="w-5 h-5" />,
     label: "Settings",
@@ -336,12 +335,14 @@ export function NavigationSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b">
-        <div className="flex items-center gap-2 px-2 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            K2
+        <Link href="/dashboard">
+          <div className="flex items-center gap-2 px-2 py-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+              K2
+            </div>
+            <span className="font-semibold text-sm">K2 Summit</span>
           </div>
-          <span className="font-semibold text-sm">K2 Summit</span>
-        </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
@@ -357,7 +358,7 @@ export function NavigationSidebar() {
                     <SidebarMenuButton
                       render={<Link href={item.href || "/"} />}
                       isActive={isItemActive(item.href)}
-                      className="relative w-full justify-start"
+                      className="relative w-full justify-start xl:space-y-2"
                       onClick={() => setOpenMobile(false)}
                     >
                       {item.icon && <>{item.icon}</>}

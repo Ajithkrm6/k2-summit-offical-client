@@ -56,7 +56,7 @@ export const AddFirmCRM = () => {
     { label: "firm type 5", value: "pineapple", id: 5 },
   ];
   return (
-    <div className="p-4 space-y-3 min-h-screen bg-white rounded-lg">
+    <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
       <h1>Enter a new Tax Firm</h1>
       <p>
         Capture the code firm record, Allowing it to be linked to Contacts,

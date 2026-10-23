@@ -121,7 +121,9 @@ export function PrimaryLayout({ children }: LayoutProps) {
             aria-label="Page content"
           >
             {/* Content Wrapper with Consistent Padding */}
-            <div className="p-4 space-y-3 bg-[#EEF0F3]">{children}</div>
+            <div className="p-4 space-y-3 bg-[#EEF0F3] min-h-full">
+              {children}
+            </div>
           </div>
         </SidebarInset>
       </div>

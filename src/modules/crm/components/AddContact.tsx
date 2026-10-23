@@ -1,5 +1,4 @@
 ﻿"use client";
-import { useSearchParams } from "next/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,21 +12,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAddContact } from "@/lib/api/hooks/k2-tax-api/useAddContact";
 import type { CreateTaxFirmContactRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { useAddContact } from "@/lib/api/hooks/k2-tax-api/useAddContact";
+import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
 import { CreateContactFormData, createContactSchema } from "@/modules/crm/lib";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 export const AddContact = () => {
-  const searchParams = useSearchParams();
-  const taxFirmId = searchParams.get("firmId") || "";
-  const firmName = searchParams.get("firmName") || "Unknown Firm";
+  const { taxFirms, isLoading } = useGetTaxFirms();
 
-  const { addContact, isPending, isSuccess, error } = useAddContact({
-    taxFirmId,
-  });
+  const [selectedFirmId, setSelectedFirmId] = useState<string>("");
+  const [selectedFirmName, setSelectedFirmName] = useState<string>("");
+
+  // Extract firm IDs and names from taxFirms data
+  const firmOptions =
+    taxFirms.map((firm) => ({
+      id: firm.taxFirmId || "",
+      name: firm.firmName || "Unknown",
+    })) || [];
+
+  // Handle firm selection
+  const handleFirmChange = (firmId: string | null) => {
+    if (firmId === null) return;
+    setSelectedFirmId(firmId);
+    const selectedFirm = firmOptions.find((f) => f.id === firmId);
+    if (selectedFirm) {
+      setSelectedFirmName(selectedFirm.name);
+    }
+  };
 
   const {
     handleSubmit,
@@ -40,50 +54,40 @@ export const AddContact = () => {
     defaultValues: {} as CreateContactFormData,
   });
 
+  const handleAddContactSuccess = () => {
+    reset();
+    setSelectedFirmId("");
+    setSelectedFirmName("");
+  };
+
+  const { addContact, isPending, error } = useAddContact({
+    taxFirmId: selectedFirmId,
+    onSuccess: handleAddContactSuccess,
+  });
+
   const onSubmit = (data: CreateContactFormData) => {
     addContact(data as CreateTaxFirmContactRequest);
   };
 
-  useEffect(() => {
-    if (isSuccess && !isPending) {
-      reset();
-    }
-  }, [isSuccess, isPending, reset]);
-
   const roleOptions = [
     { label: "Select a role...", value: null },
-    { label: "Owner", value: 1 },
-    { label: "Manager", value: 2 },
-    { label: "Staff", value: 3 },
-    { label: "Accountant", value: 4 },
+    { label: "Sales Representative", value: 1 },
+    { label: "Admin", value: 2 },
   ];
 
   const contactMethodOptions = [
     { label: "Select a method...", value: null },
-    { label: "Email", value: 1 },
-    { label: "Phone", value: 2 },
-    { label: "Cell Phone", value: 3 },
+    { label: "Email", value: 2 },
+    { label: "Phone", value: 3 },
   ];
 
-  if (!taxFirmId) {
-    return (
-      <div className="p-4 bg-white rounded-lg">
-        <Alert variant="destructive">
-          <AlertDescription>
-            Invalid access. Missing firm ID. Please select a firm first.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 space-y-3 min-h-screen bg-white rounded-lg">
+    <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
       <div>
         <h1 className="text-2xl font-bold">Add a Contact</h1>
         <p className="text-gray-600 text-sm">
-          Linked to Firm ID <strong>{taxFirmId}</strong> — {firmName}. Only one
-          contact can be designated as the Primary Contact for each firm.
+          Only one contact can be designated as the Primary Contact for each
+          firm.
         </p>
       </div>
 
@@ -95,12 +99,42 @@ export const AddContact = () => {
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-6">
-          <div className="bg-gray-50 p-4 rounded border">
-            <Label className="text-sm font-medium">Firm ID</Label>
-            <p className="text-sm font-semibold">
-              {taxFirmId} — {firmName}
-            </p>
+          <div className="space-y-2">
+            <Label htmlFor="firmSelect">Select Firm *</Label>
+            <Select value={selectedFirmId} onValueChange={handleFirmChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a firm" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Available Firms</SelectLabel>
+                  {isLoading ? (
+                    <SelectItem value="">Loading firms...</SelectItem>
+                  ) : firmOptions.length === 0 ? (
+                    <SelectItem value="">No firms available</SelectItem>
+                  ) : (
+                    firmOptions.map((firm) => (
+                      <SelectItem key={firm.id} value={firm.id}>
+                        {firm.name} ({firm.id})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {!selectedFirmId && (
+              <p className="text-red-500 text-sm">Please select a firm</p>
+            )}
           </div>
+
+          {selectedFirmId && (
+            <div className="bg-gray-50 p-4 rounded border">
+              <Label className="text-sm font-medium">Selected Firm</Label>
+              <p className="text-sm font-semibold">
+                {selectedFirmName} ({selectedFirmId})
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

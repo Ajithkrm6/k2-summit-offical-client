@@ -36,8 +36,8 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className="h-full">
+      <body className="h-full">
         <Providers>
           <PrimaryLayout>{children}</PrimaryLayout>
         </Providers>

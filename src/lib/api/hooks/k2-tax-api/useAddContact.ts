@@ -5,6 +5,7 @@ import type { AxiosError } from "axios";
 
 interface UseAddContactProps {
   taxFirmId: string;
+  onSuccess?: () => void;
 }
 
 /**
@@ -15,7 +16,7 @@ interface UseAddContactProps {
  * - Manages loading and error states via TanStack Query
  * - Provides toast notifications for user feedback
  */
-export const useAddContact = ({ taxFirmId }: UseAddContactProps) => {
+export const useAddContact = ({ taxFirmId, onSuccess }: UseAddContactProps) => {
   const { mutate, isPending, isSuccess, error } =
     usePostApiV1TaxFirmTaxfirmidContact({
       mutation: {
@@ -25,6 +26,7 @@ export const useAddContact = ({ taxFirmId }: UseAddContactProps) => {
             description: "The contact has been added to the firm",
             type: "success",
           });
+          onSuccess?.();
         },
         onError: (error: AxiosError) => {
           const errorMessage =

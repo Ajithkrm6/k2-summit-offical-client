@@ -162,6 +162,12 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+@media (min-width: 96rem) {
+  .container {
+    max-width: 80rem;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

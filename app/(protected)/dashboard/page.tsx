@@ -6,7 +6,6 @@
  */
 
 "use client";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
@@ -16,14 +15,18 @@ import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
 import { useDashboardStore } from "@/modules/dashboard/store/dashboard.store";
 import { Edit, Trash } from "lucide-react";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
   const { stats } = useDashboardStore();
   const { taxFirms, isLoading } = useGetTaxFirms();
-  console.log("taxFirms", taxFirms);
 
+  // Only log when taxFirms actually has data
+  useEffect(() => {
+    console.log("taxFirms", taxFirms);
+  }, [taxFirms]);
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 min-h-full">
       {/* Welcome Header */}
       {/* <Card
         className=" border-0 rounded-lg text-white"
@@ -41,17 +44,23 @@ export default function DashboardPage() {
         </CardHeader>
       </Card> */}
 
-      <Card className=" border-0 rounded-lg text-white p-3 grid grid-cols-2  lg:grid-cols-4 gap-3">
+      <Card className="container border-0 rounded-lg text-white p-3 grid grid-cols-2  lg:grid-cols-4 gap-3">
         <Link href="/crm/addTaxFirm" className="col-span-1">
           <Button className="w-full">Add Tax Firm</Button>
         </Link>
-        <Button className="col-span-1">Add a contact</Button>
-        <Button className="col-span-1">Log an Activity</Button>
-        <Button className="col-span-1">View Tax Firms</Button>
+        <Link href="/crm/addContact" className="col-span-1">
+          <Button className="w-full">Add a contact</Button>
+        </Link>
+        <Link href="/comingsoon" className="col-span-1">
+          <Button className="w-full">Log an Activity</Button>
+        </Link>
+        <Link href="/comingsoon" className="col-span-1">
+          <Button className="w-full">View Tax Firms</Button>
+        </Link>
       </Card>
 
       {/* Stats Grid */}
-      <div className="container mx-auto my-4 rounded-lg border p-3 space-y-4 bg-white">
+      <div className="container  my-4 h-full rounded-lg border p-3 space-y-4 bg-white">
         <div className="grid p-3 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => {
             return (

@@ -113,7 +113,7 @@ export const DocumentsCentral = () => {
   }, [isSuccess, isPending, reset, setSuccess]);
 
   return (
-    <div className="p-4 space-y-3 min-h-screen bg-white rounded-lg">
+    <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
       <h1 className="text-2xl font-bold">Documents Central</h1>
       <p>
         Track everyday documents requested for a client&apos;s tax year. Open a
@@ -250,8 +250,8 @@ export const DocumentsCentral = () => {
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-center items-end">
-            {/* <Label className="invisible">Button</Label> */}
+          <div className="flex flex-col justify-center items-center">
+            <Label className="invisible">Button</Label>
             <Button
               type="submit"
               className="w-full"
