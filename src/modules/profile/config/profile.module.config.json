@@ -1,9 +1,0 @@
-{
-  "name": "profile",
-  "version": "1.0.0",
-  "description": "Profile module",
-  "enabled": true,
-  "stage": "core",
-  "dependencies": [],
-  "features": []
-}

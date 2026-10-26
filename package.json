@@ -1,6 +1,7 @@
 {
   "name": "client",
   "version": "0.1.0",
+  "description": "Client application for the project",
   "private": true,
   "scripts": {
     "dev": "next dev",
