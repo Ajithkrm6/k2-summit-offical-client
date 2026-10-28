@@ -6,7 +6,6 @@
 
 "use client";
 
-import React from "react";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
@@ -21,19 +20,16 @@ export default function WelcomePage() {
 
   return (
     <div
+      className="flex flex-col min-h-screen"
       style={{
         background:
           "linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a)",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
         color: "#e2e8f0",
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        overflow: "hidden",
       }}
     >
-      <div className="flex flex-col  p-12 text-white h-full items-center justify-center">
+      <div className="flex-1 flex flex-col p-12 text-white items-center justify-center">
         <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mb-3">
           <span className="text-blue-700 font-bold text-xl">K2</span>
         </div>
@@ -67,7 +63,10 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      <div className="text-blue-200 text-sm p-12">
+      <div
+        className="text-blue-200 text-sm p-12 shrink-0 flex justify-center items-center"
+        style={{ background: "transparent" }}
+      >
         © 2024 K2 Concave. All rights reserved.
       </div>
     </div>

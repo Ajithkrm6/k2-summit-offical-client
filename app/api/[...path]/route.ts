@@ -78,9 +78,17 @@ async function handleRequest(
     let body: BodyInit | null = null;
     if (method !== "GET" && method !== "HEAD") {
       try {
-        const text = await request.text();
-        if (text && text.length > 0) {
-          body = text;
+        const contentType = request.headers.get("content-type");
+
+        // For multipart/form-data (file uploads), use the raw body stream
+        if (contentType?.includes("multipart/form-data")) {
+          body = request.body;
+        } else {
+          // For JSON and other text-based requests, convert to text
+          const text = await request.text();
+          if (text && text.length > 0) {
+            body = text;
+          }
         }
       } catch (bodyError) {
         // Silently continue without body
@@ -108,25 +116,42 @@ async function handleRequest(
     });
 
     // Make the actual request to backend (server-to-server)
-    const response = await fetch(fullUrl, {
+    const fetchOptions: RequestInit & { duplex?: "half" | "full" } = {
       method,
       headers: requestHeaders,
       body: body || undefined,
       redirect: "manual",
-    });
+    };
+
+    // For streams (file uploads), we need to specify duplex mode
+    if (body && typeof body === "object" && "getReader" in body) {
+      fetchOptions.duplex = "half";
+    }
+
+    const response = await fetch(fullUrl, fetchOptions);
 
     // Get the response body
     const responseBody = await response.text();
+
+    // Prepare response headers
+    const responseHeaders: Record<string, string> = {
+      "content-type":
+        response.headers.get("content-type") || "application/json",
+      "cache-control": response.headers.get("cache-control") || "no-cache",
+    };
+
+    // CRITICAL: Forward Set-Cookie header from backend to browser
+    // This is how the authentication cookie gets stored in the browser
+    const setCookieHeader = response.headers.get("set-cookie");
+    if (setCookieHeader) {
+      responseHeaders["set-cookie"] = setCookieHeader;
+    }
 
     // Return the response to browser
     return new NextResponse(responseBody, {
       status: response.status,
       statusText: response.statusText,
-      headers: {
-        "content-type":
-          response.headers.get("content-type") || "application/json",
-        "cache-control": response.headers.get("cache-control") || "no-cache",
-      },
+      headers: responseHeaders,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

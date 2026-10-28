@@ -51,13 +51,14 @@ export const DocumentsCentral = () => {
 
   // Tax person clients - real IDs from database
   const taxClients = [
-    { id: "TC0020", label: "TC0020-client-1", value: "TC0020" },
     { id: "TC0021", label: "TC0021-client-2", value: "TC0021" },
     { id: "TC0030", label: "TC0030-client-3", value: "TC0030" },
     { id: "TC0040", label: "TC0040-client-4", value: "TC0040" },
     { id: "TC0044", label: "TC0044-client-5", value: "TC0044" },
     { id: "TC0045", label: "TC0045-client-6", value: "TC0045" },
-    { id: "TC0048", label: "TC0048-client-7", value: "TC0048" },
+    { id: "TC0054", label: "TC0054-client-8", value: "TC0054" },
+    { id: "TC0071", label: "TC0071-client-9", value: "TC0071" },
+    { id: "TC0077", label: "TC0077-client-10", value: "TC0077" },
   ];
 
   const documentTypes = [

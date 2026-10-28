@@ -1,26 +1,24 @@
+import { PrimaryLayout } from "@/components/layout/PrimaryLayout";
+import { Providers } from "@/utils/providers";
 import type { Metadata, Viewport } from "next";
 import { ReactNode } from "react";
 import "./globals.css";
-import { Providers } from "@/utils/providers";
-import { PrimaryLayout } from "@/components/layout/PrimaryLayout";
 
 export const metadata: Metadata = {
-  title: "BS-Frontend-Generator App",
-  description:
-    "Professional frontend application built with BS-Frontend-Generator",
+  title: "K2 Tax Summit",
+  description: "K2 Tax Summit - Professional tax management application",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/k2-1.ico", sizes: "any" },
+      { url: "/k2.png", sizes: "96x96", type: "image/png" },
     ],
-    apple: "/apple-touch-icon.png",
+    apple: "/k2-1.ico",
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "BS-Frontend-Generator",
+    title: "K2 Tax Summit",
   },
 };
 

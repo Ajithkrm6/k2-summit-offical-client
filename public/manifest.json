@@ -1,18 +1,12 @@
 {
-  "name": "BS-Frontend-Generator App",
-  "short_name": "App",
-  "description": "Professional frontend application built with BS-Frontend-Generator",
+  "name": "K2 Tax Summit",
+  "short_name": "K2",
+  "description": "K2 Tax Summit - Professional tax management application",
   "icons": [
     {
-      "src": "/web-app-manifest-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/web-app-manifest-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/k2-1.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
       "purpose": "maskable any"
     }
   ],
