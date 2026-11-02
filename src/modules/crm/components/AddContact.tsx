@@ -1,6 +1,7 @@
 ﻿"use client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,19 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { CreateTaxFirmContactRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { Textarea } from "@/components/ui/textarea";
 import { useAddContact } from "@/lib/api/hooks/k2-tax-api/useAddContact";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
 import { CreateContactFormData, createContactSchema } from "@/modules/crm/lib";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 export const AddContact = () => {
+  const router = useRouter();
   const { taxFirms, isLoading } = useGetTaxFirms();
-
-  const [selectedFirmId, setSelectedFirmId] = useState<string>("");
-  const [selectedFirmName, setSelectedFirmName] = useState<string>("");
 
   // Extract firm IDs and names from taxFirms data
   const firmOptions =
@@ -33,31 +33,35 @@ export const AddContact = () => {
       name: firm.firmName || "Unknown",
     })) || [];
 
-  // Handle firm selection
-  const handleFirmChange = (firmId: string | null) => {
-    if (firmId === null) return;
-    setSelectedFirmId(firmId);
-    const selectedFirm = firmOptions.find((f) => f.id === firmId);
-    if (selectedFirm) {
-      setSelectedFirmName(selectedFirm.name);
-    }
-  };
-
   const {
     handleSubmit,
     register,
     control,
     reset,
     formState: { errors },
-  } = useForm({
+  } = useForm<CreateContactFormData>({
     resolver: zodResolver(createContactSchema),
-    defaultValues: {} as CreateContactFormData,
+    defaultValues: {
+      firmId: "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+      cellPhone: "",
+      email: "",
+      bestTimeToReach: "",
+      isPrimaryContact: false,
+      notes: "",
+    },
   });
+
+  const selectedFirmId = useWatch({ control, name: "firmId" });
+  const selectedFirmName = firmOptions.find(
+    (firm) => firm.id === selectedFirmId,
+  )?.name;
 
   const handleAddContactSuccess = () => {
     reset();
-    setSelectedFirmId("");
-    setSelectedFirmName("");
+    router.push("/crm/addContact");
   };
 
   const { addContact, isPending, error } = useAddContact({
@@ -66,7 +70,18 @@ export const AddContact = () => {
   });
 
   const onSubmit = (data: CreateContactFormData) => {
-    addContact(data as CreateTaxFirmContactRequest);
+    addContact({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      roleTitleTypeId: data.roleTitleTypeId,
+      phoneNumber: data.phoneNumber,
+      cellPhone: data.cellPhone,
+      email: data.email,
+      preferredContactMethodTypeId: data.preferredContactMethodTypeId,
+      bestTimeToReach: data.bestTimeToReach,
+      isPrimaryContact: data.isPrimaryContact,
+      notes: data.notes,
+    });
   };
 
   const roleOptions = [
@@ -83,6 +98,12 @@ export const AddContact = () => {
 
   return (
     <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
+      <Link
+        href="/crm/addContact"
+        className="inline-block text-sm text-primary underline-offset-4 hover:underline"
+      >
+        Back to Contacts
+      </Link>
       <div>
         <h1 className="text-2xl font-bold">Add a Contact</h1>
         <p className="text-gray-600 text-sm">
@@ -97,33 +118,46 @@ export const AddContact = () => {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="firmSelect">Select Firm *</Label>
-            <Select value={selectedFirmId} onValueChange={handleFirmChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a firm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Available Firms</SelectLabel>
-                  {isLoading ? (
-                    <SelectItem value="">Loading firms...</SelectItem>
-                  ) : firmOptions.length === 0 ? (
-                    <SelectItem value="">No firms available</SelectItem>
-                  ) : (
-                    firmOptions.map((firm) => (
-                      <SelectItem key={firm.id} value={firm.id}>
-                        {firm.name} ({firm.id})
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {!selectedFirmId && (
-              <p className="text-red-500 text-sm">Please select a firm</p>
+            <Controller
+              name="firmId"
+              control={control}
+              disabled={!selectedFirmId}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="firmSelect" className="w-full">
+                    <SelectValue placeholder="Select a firm" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Available Firms</SelectLabel>
+                      {isLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading firms...
+                        </SelectItem>
+                      ) : firmOptions.length === 0 ? (
+                        <SelectItem value="empty" disabled>
+                          No firms available
+                        </SelectItem>
+                      ) : (
+                        firmOptions.map((firm) => (
+                          <SelectItem key={firm.id} value={firm.id}>
+                            {firm.name} ({firm.id})
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.firmId && (
+              <p role="alert" className="text-red-500 text-sm">
+                {errors.firmId.message}
+              </p>
             )}
           </div>
 
@@ -138,11 +172,15 @@ export const AddContact = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
+              <Label htmlFor="firstName">
+                First Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 {...register("firstName")}
                 id="firstName"
                 placeholder="John"
+                required
+                disabled={!selectedFirmId}
               />
               {errors.firstName && (
                 <p className="text-red-500 text-sm">
@@ -151,11 +189,15 @@ export const AddContact = () => {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
+              <Label htmlFor="lastName">
+                Last Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 {...register("lastName")}
                 id="lastName"
                 placeholder="Doe"
+                required
+                disabled={!selectedFirmId}
               />
               {errors.lastName && (
                 <p className="text-red-500 text-sm">
@@ -167,7 +209,9 @@ export const AddContact = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="roleTitleTypeId">Role / Title *</Label>
+              <Label htmlFor="roleTitleTypeId">
+                Role / Title <span className="text-red-500">*</span>
+              </Label>
               <Controller
                 name="roleTitleTypeId"
                 control={control}
@@ -182,7 +226,7 @@ export const AddContact = () => {
                       }
                       value={field.value?.toString() || ""}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger id="roleTitleTypeId" className="w-full">
                         <SelectValue placeholder="Select a role">
                           {selectedItem?.label}
                         </SelectValue>
@@ -216,6 +260,7 @@ export const AddContact = () => {
                 {...register("phoneNumber")}
                 id="phoneNumber"
                 placeholder="(555) 123-4567"
+                disabled={!selectedFirmId}
               />
               {errors.phoneNumber && (
                 <p className="text-red-500 text-sm">
@@ -232,6 +277,7 @@ export const AddContact = () => {
                 {...register("cellPhone")}
                 id="cellPhone"
                 placeholder="(555) 987-6543"
+                disabled={!selectedFirmId}
               />
               {errors.cellPhone && (
                 <p className="text-red-500 text-sm">
@@ -246,6 +292,7 @@ export const AddContact = () => {
                 id="email"
                 type="email"
                 placeholder="john.doe@example.com"
+                disabled={!selectedFirmId}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email.message}</p>
@@ -256,7 +303,7 @@ export const AddContact = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="preferredContactMethodTypeId">
-                Preferred Contact Method
+                Preferred Contact Method <span className="text-red-500">*</span>
               </Label>
               <Controller
                 name="preferredContactMethodTypeId"
@@ -272,7 +319,10 @@ export const AddContact = () => {
                       }
                       value={field.value?.toString() || ""}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger
+                        id="preferredContactMethodTypeId"
+                        className="w-full"
+                      >
                         <SelectValue placeholder="Select a method">
                           {selectedItem?.label}
                         </SelectValue>
@@ -306,6 +356,7 @@ export const AddContact = () => {
                 {...register("bestTimeToReach")}
                 id="bestTimeToReach"
                 placeholder="9 AM - 5 PM EST"
+                disabled={!selectedFirmId}
               />
               {errors.bestTimeToReach && (
                 <p className="text-red-500 text-sm">
@@ -317,11 +368,18 @@ export const AddContact = () => {
 
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <input
-                {...register("isPrimaryContact")}
-                id="isPrimaryContact"
-                type="checkbox"
-                className="w-4 h-4"
+              <Controller
+                name="isPrimaryContact"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    id="isPrimaryContact"
+                    disabled={!selectedFirmId}
+                    className="w-4 h-4"
+                  />
+                )}
               />
               <Label htmlFor="isPrimaryContact" className="cursor-pointer">
                 Primary Contact?
@@ -331,7 +389,7 @@ export const AddContact = () => {
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
-            <textarea
+            <Textarea
               {...register("notes")}
               id="notes"
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -347,7 +405,7 @@ export const AddContact = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => reset()}
+              onClick={() => router.push("/crm/addContact")}
               disabled={isPending}
             >
               Cancel

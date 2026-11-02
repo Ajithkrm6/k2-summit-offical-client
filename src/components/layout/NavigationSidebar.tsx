@@ -112,14 +112,14 @@ const NAV_ITEMS: NavItem[] = [
       },
       {
         icon: <Contact className="w-5 h-5" />,
-        label: "Add Contact",
+        label: "Contacts",
         href: "/crm/addContact",
         featureGate: "crm.addContact",
       },
       {
         icon: <Activity className="w-5 h-5" />,
-        label: "Log an Activity",
-        href: "/comingsoon",
+        label: "Tax Clients",
+        href: "/crm/addTaxClient",
         featureGate: "workpool.intake",
         badgeVariant: "beta-s1",
       },

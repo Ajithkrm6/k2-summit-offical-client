@@ -1,4 +1,5 @@
-import { AddContact } from "@/modules/crm/components/AddContact";
-export default function AddContactPage() {
-  return <AddContact />;
+import { Contacts } from "@/modules/crm/components/Contacts";
+
+export default function ContactsPage() {
+  return <Contacts />;
 }

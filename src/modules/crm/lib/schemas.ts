@@ -2,7 +2,7 @@ import * as z from "zod";
 
 /**
  * CRM Module Schemas
- * Zod validation schemas for Tax Firm and Document operations
+ * Zod validation schemas for CRM forms
  */
 
 // ============================================================================
@@ -103,19 +103,21 @@ export const createTaxFirmSchema = z.object({
 // ============================================================================
 
 export const createContactSchema = z.object({
+  firmId: z.string().min(1, "Please select a firm"),
   firstName: z
-    .string()
+    .string({ error: "First name is required" })
+    .trim()
     .min(1, "First name is required")
-    .max(255, "First name cannot exceed 255 characters")
-    .nullable()
-    .optional(),
+    .max(255, "First name cannot exceed 255 characters"),
   lastName: z
-    .string()
+    .string({ error: "Last name is required" })
+    .trim()
     .min(1, "Last name is required")
-    .max(255, "Last name cannot exceed 255 characters")
-    .nullable()
-    .optional(),
-  roleTitleTypeId: z.number().int().optional(),
+    .max(255, "Last name cannot exceed 255 characters"),
+  roleTitleTypeId: z
+    .number({ error: "Please select a role / title" })
+    .int()
+    .positive("Please select a role / title"),
   phoneNumber: z
     .string()
     .regex(/^[\d\-\+\(\)\s]*$/, "Invalid phone number")
@@ -126,8 +128,14 @@ export const createContactSchema = z.object({
     .regex(/^[\d\-\+\(\)\s]*$/, "Invalid cell phone")
     .nullable()
     .optional(),
-  email: z.string().email("Invalid email address").nullable().optional(),
-  preferredContactMethodTypeId: z.number().int().nullable().optional(),
+  email: z
+    .union([z.literal(""), z.string().email("Invalid email address")])
+    .nullable()
+    .optional(),
+  preferredContactMethodTypeId: z
+    .number({ error: "Please select a preferred contact method" })
+    .int()
+    .positive("Please select a preferred contact method"),
   bestTimeToReach: z
     .string()
     .max(500, "Best time to reach cannot exceed 500 characters")
@@ -139,6 +147,45 @@ export const createContactSchema = z.object({
     .max(1000, "Notes cannot exceed 1000 characters")
     .nullable()
     .optional(),
+});
+
+// ============================================================================
+// Tax Client Schemas
+// ============================================================================
+
+export const createTaxClientSchema = z.object({
+  firmId: z.string().min(1, "Firm is required"),
+  taxYear: z
+    .string()
+    .min(1, "Tax year is required")
+    .regex(/^\d{4}$/, "Tax year must be a four-digit year"),
+  clientStatus: z.string().min(1, "Client status is required"),
+  taxpayerFirstName: z.string().trim().min(1, "First name is required"),
+  taxpayerLastName: z.string().trim().min(1, "Last name is required"),
+  taxpayerSSN: z
+    .string()
+    .min(1, "SSN is required")
+    .regex(/^\d{3}-\d{2}-\d{4}$/, "SSN must be in format XXX-XX-XXXX"),
+  taxpayerDOB: z.union([z.literal(""), z.iso.date("Invalid date of birth")]),
+  taxpayerOccupation: z.string(),
+  filingStatus: z.string().min(1, "Filing status is required"),
+  mailingAddress: z.string(),
+  phoneNumber: z.string().regex(/^[\d+()\s-]*$/, "Invalid phone number"),
+  email: z.union([z.literal(""), z.email("Invalid email address")]),
+  numberOfDependents: z
+    .string()
+    .regex(/^\d*$/, "Number of dependents must be a non-negative integer"),
+  priorYearAGI: z
+    .string()
+    .refine(
+      (value) =>
+        value === "" || (value.trim() !== "" && Number.isFinite(Number(value))),
+      "Prior year AGI must be a number",
+    ),
+  preferredContactMethod: z
+    .string()
+    .regex(/^$|^[1-9]\d*$/, "Invalid contact method"),
+  notes: z.string(),
 });
 
 // ============================================================================
@@ -174,6 +221,7 @@ export const getTaxFirmSchema = createTaxFirmSchema.extend({
 
 export type CreateTaxFirmFormData = z.infer<typeof createTaxFirmSchema>;
 export type CreateContactFormData = z.infer<typeof createContactSchema>;
+export type CreateTaxClientFormData = z.infer<typeof createTaxClientSchema>;
 export type UpdateTaxFirmFormData = z.infer<typeof updateTaxFirmSchema>;
 export type GetTaxFirmData = z.infer<typeof getTaxFirmSchema>;
 export type UploadDocumentsFormData = z.infer<typeof uploadDocumentsSchema>;

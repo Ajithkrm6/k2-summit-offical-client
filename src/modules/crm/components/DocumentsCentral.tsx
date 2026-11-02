@@ -193,7 +193,7 @@ export const DocumentsCentral = () => {
                       <SelectGroup>
                         <SelectLabel>Tax Years</SelectLabel>
                         {Array.from(
-                          { length: 50 },
+                          { length: 5 },
                           (_, i) => new Date().getFullYear() - i,
                         ).map((year) => (
                           <SelectItem key={year} value={year.toString()}>

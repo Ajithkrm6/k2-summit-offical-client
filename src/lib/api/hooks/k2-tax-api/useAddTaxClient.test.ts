@@ -1,0 +1,113 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CreateTaxClientFormData } from "../../../../modules/crm/lib";
+
+const { mutate, useMutation, notify } = vi.hoisted(() => ({
+  mutate: vi.fn(),
+  useMutation: vi.fn(),
+  notify: vi.fn(),
+}));
+
+vi.mock("@/components/ui/toast", () => ({
+  toast: { add: notify },
+}));
+
+vi.mock("@/lib/api/generated/k2-tax-api", () => ({
+  usePostApiV1TaxFirmTaxfirmidTaxPersonClient: useMutation,
+}));
+
+import { useAddTaxClient } from "./useAddTaxClient";
+
+const form: CreateTaxClientFormData = {
+  firmId: "selected-firm-id",
+  taxYear: "2026",
+  clientStatus: "new",
+  taxpayerFirstName: "Jane",
+  taxpayerLastName: "Doe",
+  taxpayerSSN: "123-45-6789",
+  taxpayerDOB: "",
+  taxpayerOccupation: "",
+  filingStatus: "single",
+  mailingAddress: "",
+  phoneNumber: "",
+  email: "",
+  numberOfDependents: "0",
+  priorYearAGI: "",
+  preferredContactMethod: "",
+  notes: "",
+};
+
+describe("useAddTaxClient", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useMutation.mockReturnValue({
+      mutate,
+      isPending: false,
+      isSuccess: false,
+      error: null,
+    });
+  });
+
+  it("submits the selected firm and only supported API fields", () => {
+    useAddTaxClient().addTaxClient(form);
+
+    expect(mutate).toHaveBeenCalledExactlyOnceWith({
+      taxfirmid: "selected-firm-id",
+      data: {
+        taxYear: 2026,
+        taxpayerFirstName: "Jane",
+        taxpayerLastName: "Doe",
+        taxpayerSsn: "123-45-6789",
+        taxpayerDob: null,
+        taxpayerOccupation: null,
+        address: null,
+        phoneNumber: null,
+        email: null,
+        preferredContactMethodTypeId: null,
+      },
+    });
+  });
+
+  it("maps populated form fields to API names and numeric IDs", () => {
+    useAddTaxClient().addTaxClient({
+      ...form,
+      taxpayerDOB: "1990-05-10",
+      taxpayerOccupation: "Accountant",
+      mailingAddress: "123 Main Street",
+      phoneNumber: "555-123-4567",
+      email: "jane@example.com",
+      preferredContactMethod: "2",
+    });
+
+    expect(mutate).toHaveBeenCalledWith({
+      taxfirmid: form.firmId,
+      data: {
+        taxYear: 2026,
+        taxpayerFirstName: "Jane",
+        taxpayerLastName: "Doe",
+        taxpayerSsn: "123-45-6789",
+        taxpayerDob: "1990-05-10",
+        taxpayerOccupation: "Accountant",
+        address: "123 Main Street",
+        phoneNumber: "555-123-4567",
+        email: "jane@example.com",
+        preferredContactMethodTypeId: 2,
+      },
+    });
+  });
+
+  it("uses mutation state without a second store", () => {
+    const error = new Error("Request failed");
+    useMutation.mockReturnValue({
+      mutate,
+      isPending: true,
+      isSuccess: false,
+      error,
+    });
+
+    const result = useAddTaxClient();
+
+    expect(result.isPending).toBe(true);
+    expect(result.isSuccess).toBe(false);
+    expect(result.error).toBe(error);
+  });
+});
