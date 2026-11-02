@@ -4,12 +4,20 @@
  * K2 Tax API
  * OpenAPI spec version: v1
  */
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult,
 } from "@tanstack/react-query";
 
 import axios from "axios";
@@ -18,12 +26,34 @@ import type { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import type {
   CreateLogActivityRequest,
   CreateLogActivityResponse,
+  DeleteLogActivityResponseErrorOr,
+  GetLogActivityByTaxFirmIdResponse,
+  GetLogActivityResponse,
+  GetLogActivityResponseErrorOr,
   PostApiV1TaxFirmTaxfirmidLogActivityParams,
   ProblemDetails,
   UpdateLogActivityRequest,
   UpdateLogActivityResponse,
   UpdateLogActivityResponseErrorOr,
 } from "../k2TaxAPI.schemas";
+
+const withQueryKey = <T extends object, K>(
+  query: T,
+  queryKey: K,
+): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === "queryKey") continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
 
 export const postApiV1TaxFirmTaxfirmidLogActivity = (
   taxfirmid: string,
@@ -142,20 +172,20 @@ export const usePostApiV1TaxFirmTaxfirmidLogActivity = <
     queryClient,
   );
 };
-export const putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId = (
+export const patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId = (
   taxFirmId: string,
   logActivityId: string,
   updateLogActivityRequest?: UpdateLogActivityRequest,
   options?: AxiosRequestConfig,
 ): Promise<AxiosResponse<UpdateLogActivityResponseErrorOr>> => {
-  return axios.put(
+  return axios.patch(
     `/api/v1/TaxFirm/${taxFirmId}/LogActivity/${logActivityId}`,
     updateLogActivityRequest,
     options,
   );
 };
 
-export const getPutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdUrl = (
+export const getPatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdUrl = (
   taxFirmId: string,
   logActivityId: string,
 ) => {
@@ -170,33 +200,33 @@ export const getPutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdUrl = (
     });
 };
 
-export const getPutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationKey =
-  () => ["putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId"] as const;
+export const getPatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationKey =
+  () => ["patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId"] as const;
 
-export const getPutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationOptions =
+export const getPatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationOptions =
   <
     TError = AxiosError<ProblemDetails | UpdateLogActivityResponse>,
     TContext = unknown,
   >(options?: {
     mutation?: UseMutationOptions<
       Awaited<
-        ReturnType<typeof putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+        ReturnType<typeof patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
       >,
       TError,
-      PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
+      PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
       TContext
     >;
     axios?: AxiosRequestConfig;
   }): UseMutationOptions<
     Awaited<
-      ReturnType<typeof putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+      ReturnType<typeof patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
     >,
     TError,
-    PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
+    PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
     TContext
   > => {
     const mutationKey =
-      getPutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationKey();
+      getPatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationKey();
     const { mutation: mutationOptions, axios: axiosOptions } = options
       ? options.mutation &&
         "mutationKey" in options.mutation &&
@@ -207,13 +237,13 @@ export const getPutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationOptions 
 
     const mutationFn: MutationFunction<
       Awaited<
-        ReturnType<typeof putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+        ReturnType<typeof patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
       >,
-      PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables
+      PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables
     > = (props) => {
       const { taxFirmId, logActivityId, data } = props ?? {};
 
-      return putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId(
+      return patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId(
         taxFirmId,
         logActivityId,
         data,
@@ -224,41 +254,578 @@ export const getPutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationOptions 
     return { mutationFn, ...mutationOptions };
   };
 
-export type PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationResult =
+export type PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationResult =
   NonNullable<
-    Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>>
+    Awaited<
+      ReturnType<typeof patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+    >
   >;
-export type PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationBody =
+export type PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationBody =
   UpdateLogActivityRequest | undefined;
-export type PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationError =
+export type PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationError =
   AxiosError<ProblemDetails | UpdateLogActivityResponse>;
-export type PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables =
+export type PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables =
   { taxFirmId: string; logActivityId: string; data?: UpdateLogActivityRequest };
 
-export const usePutApiV1TaxFirmTaxFirmIdLogActivityLogActivityId = <
+export const usePatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId = <
   TError = AxiosError<ProblemDetails | UpdateLogActivityResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<
-        ReturnType<typeof putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+        ReturnType<typeof patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
       >,
       TError,
-      PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
+      PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
       TContext
     >;
     axios?: AxiosRequestConfig;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>>,
+  Awaited<
+    ReturnType<typeof patchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+  >,
   TError,
-  PutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
+  PatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
   TContext
 > => {
   return useMutation(
-    getPutApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationOptions(options),
+    getPatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationOptions(
+      options,
+    ),
     queryClient,
   );
 };
+export const getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId = (
+  taxFirmId: string,
+  logActivityId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<GetLogActivityResponseErrorOr>> => {
+  return axios.get(
+    `/api/v1/TaxFirm/${taxFirmId}/LogActivity/${logActivityId}`,
+    options,
+  );
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdUrl = (
+  taxFirmId: string,
+  logActivityId: string,
+) => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/TaxFirm/${taxFirmId}/LogActivity/${logActivityId}`,
+      baseURL: "",
+    });
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdQueryKey = (
+  taxFirmId: string,
+  logActivityId: string,
+) => {
+  return [`/api/v1/TaxFirm/${taxFirmId}/LogActivity/${logActivityId}`] as const;
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdQueryOptions = <
+  TData = Awaited<
+    ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+  >,
+  TError = AxiosError<GetLogActivityResponse>,
+>(
+  taxFirmId: string,
+  logActivityId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+        >,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdQueryKey(
+      taxFirmId,
+      logActivityId,
+    );
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>>
+  > = ({ signal }) =>
+    getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId(taxFirmId, logActivityId, {
+      signal,
+      ...axiosOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled:
+      taxFirmId !== null &&
+      taxFirmId !== undefined &&
+      logActivityId !== null &&
+      logActivityId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<
+      ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+    >,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdQueryResult =
+  NonNullable<
+    Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>>
+  >;
+export type GetApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdQueryError =
+  AxiosError<GetLogActivityResponse>;
+
+export function useGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityId<
+  TData = Awaited<
+    ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+  >,
+  TError = AxiosError<GetLogActivityResponse>,
+>(
+  taxFirmId: string,
+  logActivityId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+          >,
+          TError,
+          Awaited<
+            ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+          >
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityId<
+  TData = Awaited<
+    ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+  >,
+  TError = AxiosError<GetLogActivityResponse>,
+>(
+  taxFirmId: string,
+  logActivityId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+        >,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<
+            ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+          >,
+          TError,
+          Awaited<
+            ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+          >
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityId<
+  TData = Awaited<
+    ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+  >,
+  TError = AxiosError<GetLogActivityResponse>,
+>(
+  taxFirmId: string,
+  logActivityId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+        >,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityId<
+  TData = Awaited<
+    ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+  >,
+  TError = AxiosError<GetLogActivityResponse>,
+>(
+  taxFirmId: string,
+  logActivityId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<
+          ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+        >,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getGetApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdQueryOptions(
+      taxFirmId,
+      logActivityId,
+      options,
+    );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId = (
+  taxFirmId: string,
+  logActivityId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<DeleteLogActivityResponseErrorOr>> => {
+  return axios.delete(
+    `/api/v1/TaxFirm/${taxFirmId}/LogActivity/${logActivityId}`,
+    options,
+  );
+};
+
+export const getDeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdUrl = (
+  taxFirmId: string,
+  logActivityId: string,
+) => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/TaxFirm/${taxFirmId}/LogActivity/${logActivityId}`,
+      baseURL: "",
+    });
+};
+
+export const getDeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationKey =
+  () => ["deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId"] as const;
+
+export const getDeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationOptions =
+  <TError = AxiosError<ProblemDetails>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+      >,
+      TError,
+      DeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
+      TContext
+    >;
+    axios?: AxiosRequestConfig;
+  }): UseMutationOptions<
+    Awaited<
+      ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+    >,
+    TError,
+    DeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
+    TContext
+  > => {
+    const mutationKey =
+      getDeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationKey();
+    const { mutation: mutationOptions, axios: axiosOptions } = options
+      ? options.mutation &&
+        "mutationKey" in options.mutation &&
+        options.mutation.mutationKey
+        ? options
+        : { ...options, mutation: { ...options.mutation, mutationKey } }
+      : { mutation: { mutationKey }, axios: undefined };
+
+    const mutationFn: MutationFunction<
+      Awaited<
+        ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+      >,
+      DeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables
+    > = (props) => {
+      const { taxFirmId, logActivityId } = props ?? {};
+
+      return deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId(
+        taxFirmId,
+        logActivityId,
+        axiosOptions,
+      );
+    };
+
+    return { mutationFn, ...mutationOptions };
+  };
+
+export type DeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationResult =
+  NonNullable<
+    Awaited<
+      ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+    >
+  >;
+
+export type DeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationError =
+  AxiosError<ProblemDetails>;
+export type DeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables =
+  { taxFirmId: string; logActivityId: string };
+
+export const useDeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId = <
+  TError = AxiosError<ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<
+        ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+      >,
+      TError,
+      DeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
+      TContext
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<
+    ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityId>
+  >,
+  TError,
+  DeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getDeleteApiV1TaxFirmTaxFirmIdLogActivityLogActivityIdMutationOptions(
+      options,
+    ),
+    queryClient,
+  );
+};
+export const getApiV1TaxFirmTaxFirmIdLogActivities = (
+  taxFirmId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<GetLogActivityByTaxFirmIdResponse[]>> => {
+  return axios.get(`/api/v1/TaxFirm/${taxFirmId}/LogActivities`, options);
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdLogActivitiesUrl = (
+  taxFirmId: string,
+) => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/TaxFirm/${taxFirmId}/LogActivities`,
+      baseURL: "",
+    });
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey = (
+  taxFirmId: string,
+) => {
+  return [`/api/v1/TaxFirm/${taxFirmId}/LogActivities`] as const;
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+  TError = AxiosError<unknown>,
+>(
+  taxFirmId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey(taxFirmId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>
+  > = ({ signal }) =>
+    getApiV1TaxFirmTaxFirmIdLogActivities(taxFirmId, {
+      signal,
+      ...axiosOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: taxFirmId !== null && taxFirmId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1TaxFirmTaxFirmIdLogActivitiesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>
+>;
+export type GetApiV1TaxFirmTaxFirmIdLogActivitiesQueryError =
+  AxiosError<unknown>;
+
+export function useGetApiV1TaxFirmTaxFirmIdLogActivities<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+  TError = AxiosError<unknown>,
+>(
+  taxFirmId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirmTaxFirmIdLogActivities<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+  TError = AxiosError<unknown>,
+>(
+  taxFirmId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirmTaxFirmIdLogActivities<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+  TError = AxiosError<unknown>,
+>(
+  taxFirmId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetApiV1TaxFirmTaxFirmIdLogActivities<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+  TError = AxiosError<unknown>,
+>(
+  taxFirmId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdLogActivities>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryOptions(
+    taxFirmId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

@@ -1,5 +1,9 @@
 import { toast } from "@/components/ui/toast";
-import { usePostApiV1TaxFirmTaxfirmidContact } from "@/lib/api/generated/k2-tax-api";
+import {
+  getGetApiV1TaxFirmTaxFirmIdTaxFirmContactsQueryKey,
+  usePostApiV1TaxFirmTaxfirmidContact,
+} from "@/lib/api/generated/k2-tax-api";
+import { useQueryClient } from "@tanstack/react-query";
 import type { CreateTaxFirmContactRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import type { AxiosError } from "axios";
 
@@ -17,10 +21,16 @@ interface UseAddContactProps {
  * - Provides toast notifications for user feedback
  */
 export const useAddContact = ({ taxFirmId, onSuccess }: UseAddContactProps) => {
+  const queryClient = useQueryClient();
   const { mutate, isPending, isSuccess, error } =
     usePostApiV1TaxFirmTaxfirmidContact({
       mutation: {
-        onSuccess: () => {
+        onSuccess: async (_response, variables) => {
+          await queryClient.invalidateQueries({
+            queryKey: getGetApiV1TaxFirmTaxFirmIdTaxFirmContactsQueryKey(
+              variables.taxfirmid,
+            ),
+          });
           toast.add({
             title: "Contact added successfully",
             description: "The contact has been added to the firm",

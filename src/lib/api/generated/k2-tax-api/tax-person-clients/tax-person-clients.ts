@@ -4,12 +4,20 @@
  * K2 Tax API
  * OpenAPI spec version: v1
  */
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult,
 } from "@tanstack/react-query";
 
 import axios from "axios";
@@ -19,6 +27,12 @@ import type {
   CreateTaxPersonClientRequest,
   CreateTaxPersonClientResponse,
   CreateTaxPersonClientResponseErrorOr,
+  DeleteTaxPersonClientResponseErrorOr,
+  GetClientDocumentResponse,
+  GetClientDocumentResponseErrorOr,
+  GetTaxPersonClientByTaxFirmIdResponse,
+  GetTaxPersonClientResponse,
+  GetTaxPersonClientResponseErrorOr,
   PostApiV1ClientDocumentsBody,
   ProblemDetails,
   UpdateTaxPersonClientRequest,
@@ -26,6 +40,24 @@ import type {
   UpdateTaxPersonClientResponseErrorOr,
   UploadClientDocumentsResult,
 } from "../k2TaxAPI.schemas";
+
+const withQueryKey = <T extends object, K>(
+  query: T,
+  queryKey: K,
+): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === "queryKey") continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
 
 export const postApiV1TaxFirmTaxfirmidTaxPersonClient = (
   taxfirmid: string,
@@ -137,20 +169,196 @@ export const usePostApiV1TaxFirmTaxfirmidTaxPersonClient = <
     queryClient,
   );
 };
-export const putApiV1TaxFirmTaxFirmIdClientClientId = (
+export const getApiV1TaxFirmTaxFirmIdTaxPersonClients = (
   taxFirmId: string,
-  clientId: string,
-  updateTaxPersonClientRequest?: UpdateTaxPersonClientRequest,
   options?: AxiosRequestConfig,
-): Promise<AxiosResponse<UpdateTaxPersonClientResponseErrorOr>> => {
-  return axios.put(
-    `/api/v1/TaxFirm/${taxFirmId}/Client/${clientId}`,
-    updateTaxPersonClientRequest,
-    options,
-  );
+): Promise<AxiosResponse<GetTaxPersonClientByTaxFirmIdResponse[]>> => {
+  return axios.get(`/api/v1/TaxFirm/${taxFirmId}/TaxPersonClients`, options);
 };
 
-export const getPutApiV1TaxFirmTaxFirmIdClientClientIdUrl = (
+export const getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsUrl = (
+  taxFirmId: string,
+) => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/TaxFirm/${taxFirmId}/TaxPersonClients`,
+      baseURL: "",
+    });
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey = (
+  taxFirmId: string,
+) => {
+  return [`/api/v1/TaxFirm/${taxFirmId}/TaxPersonClients`] as const;
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  taxFirmId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey(taxFirmId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>
+  > = ({ signal }) =>
+    getApiV1TaxFirmTaxFirmIdTaxPersonClients(taxFirmId, {
+      signal,
+      ...axiosOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: taxFirmId !== null && taxFirmId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>
+>;
+export type GetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryError =
+  AxiosError<ProblemDetails>;
+
+export function useGetApiV1TaxFirmTaxFirmIdTaxPersonClients<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  taxFirmId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirmTaxFirmIdTaxPersonClients<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  taxFirmId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirmTaxFirmIdTaxPersonClients<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  taxFirmId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetApiV1TaxFirmTaxFirmIdTaxPersonClients<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+  TError = AxiosError<ProblemDetails>,
+>(
+  taxFirmId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdTaxPersonClients>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryOptions(
+    taxFirmId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getApiV1TaxFirmTaxFirmIdClientClientId = (
+  taxFirmId: string,
+  clientId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<GetTaxPersonClientResponseErrorOr>> => {
+  return axios.get(`/api/v1/TaxFirm/${taxFirmId}/Client/${clientId}`, options);
+};
+
+export const getGetApiV1TaxFirmTaxFirmIdClientClientIdUrl = (
   taxFirmId: string,
   clientId: string,
 ) => {
@@ -165,27 +373,226 @@ export const getPutApiV1TaxFirmTaxFirmIdClientClientIdUrl = (
     });
 };
 
-export const getPutApiV1TaxFirmTaxFirmIdClientClientIdMutationKey = () =>
-  ["putApiV1TaxFirmTaxFirmIdClientClientId"] as const;
+export const getGetApiV1TaxFirmTaxFirmIdClientClientIdQueryKey = (
+  taxFirmId: string,
+  clientId: string,
+) => {
+  return [`/api/v1/TaxFirm/${taxFirmId}/Client/${clientId}`] as const;
+};
 
-export const getPutApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions = <
+export const getGetApiV1TaxFirmTaxFirmIdClientClientIdQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+  TError = AxiosError<GetTaxPersonClientResponse>,
+>(
+  taxFirmId: string,
+  clientId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetApiV1TaxFirmTaxFirmIdClientClientIdQueryKey(taxFirmId, clientId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>
+  > = ({ signal }) =>
+    getApiV1TaxFirmTaxFirmIdClientClientId(taxFirmId, clientId, {
+      signal,
+      ...axiosOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled:
+      taxFirmId !== null &&
+      taxFirmId !== undefined &&
+      clientId !== null &&
+      clientId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1TaxFirmTaxFirmIdClientClientIdQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>
+>;
+export type GetApiV1TaxFirmTaxFirmIdClientClientIdQueryError =
+  AxiosError<GetTaxPersonClientResponse>;
+
+export function useGetApiV1TaxFirmTaxFirmIdClientClientId<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+  TError = AxiosError<GetTaxPersonClientResponse>,
+>(
+  taxFirmId: string,
+  clientId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirmTaxFirmIdClientClientId<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+  TError = AxiosError<GetTaxPersonClientResponse>,
+>(
+  taxFirmId: string,
+  clientId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1TaxFirmTaxFirmIdClientClientId<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+  TError = AxiosError<GetTaxPersonClientResponse>,
+>(
+  taxFirmId: string,
+  clientId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetApiV1TaxFirmTaxFirmIdClientClientId<
+  TData = Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+  TError = AxiosError<GetTaxPersonClientResponse>,
+>(
+  taxFirmId: string,
+  clientId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1TaxFirmTaxFirmIdClientClientId>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetApiV1TaxFirmTaxFirmIdClientClientIdQueryOptions(
+    taxFirmId,
+    clientId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const patchApiV1TaxFirmTaxFirmIdClientClientId = (
+  taxFirmId: string,
+  clientId: string,
+  updateTaxPersonClientRequest?: UpdateTaxPersonClientRequest,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<UpdateTaxPersonClientResponseErrorOr>> => {
+  return axios.patch(
+    `/api/v1/TaxFirm/${taxFirmId}/Client/${clientId}`,
+    updateTaxPersonClientRequest,
+    options,
+  );
+};
+
+export const getPatchApiV1TaxFirmTaxFirmIdClientClientIdUrl = (
+  taxFirmId: string,
+  clientId: string,
+) => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/TaxFirm/${taxFirmId}/Client/${clientId}`,
+      baseURL: "",
+    });
+};
+
+export const getPatchApiV1TaxFirmTaxFirmIdClientClientIdMutationKey = () =>
+  ["patchApiV1TaxFirmTaxFirmIdClientClientId"] as const;
+
+export const getPatchApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions = <
   TError = AxiosError<ProblemDetails | UpdateTaxPersonClientResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdClientClientId>>,
+    Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmIdClientClientId>>,
     TError,
-    PutApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
+    PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
     TContext
   >;
   axios?: AxiosRequestConfig;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdClientClientId>>,
+  Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmIdClientClientId>>,
   TError,
-  PutApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
+  PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
   TContext
 > => {
-  const mutationKey = getPutApiV1TaxFirmTaxFirmIdClientClientIdMutationKey();
+  const mutationKey = getPatchApiV1TaxFirmTaxFirmIdClientClientIdMutationKey();
   const { mutation: mutationOptions, axios: axiosOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -195,12 +602,12 @@ export const getPutApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions = <
     : { mutation: { mutationKey }, axios: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdClientClientId>>,
-    PutApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables
+    Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmIdClientClientId>>,
+    PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables
   > = (props) => {
     const { taxFirmId, clientId, data } = props ?? {};
 
-    return putApiV1TaxFirmTaxFirmIdClientClientId(
+    return patchApiV1TaxFirmTaxFirmIdClientClientId(
       taxFirmId,
       clientId,
       data,
@@ -211,42 +618,151 @@ export const getPutApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions = <
   return { mutationFn, ...mutationOptions };
 };
 
-export type PutApiV1TaxFirmTaxFirmIdClientClientIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdClientClientId>>
->;
-export type PutApiV1TaxFirmTaxFirmIdClientClientIdMutationBody =
+export type PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmIdClientClientId>>
+  >;
+export type PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationBody =
   UpdateTaxPersonClientRequest | undefined;
-export type PutApiV1TaxFirmTaxFirmIdClientClientIdMutationError = AxiosError<
+export type PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationError = AxiosError<
   ProblemDetails | UpdateTaxPersonClientResponse
 >;
-export type PutApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables = {
+export type PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables = {
   taxFirmId: string;
   clientId: string;
   data?: UpdateTaxPersonClientRequest;
 };
 
-export const usePutApiV1TaxFirmTaxFirmIdClientClientId = <
+export const usePatchApiV1TaxFirmTaxFirmIdClientClientId = <
   TError = AxiosError<ProblemDetails | UpdateTaxPersonClientResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdClientClientId>>,
+      Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmIdClientClientId>>,
       TError,
-      PutApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
+      PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
       TContext
     >;
     axios?: AxiosRequestConfig;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmIdClientClientId>>,
+  Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmIdClientClientId>>,
   TError,
-  PutApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
+  PatchApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
   TContext
 > => {
   return useMutation(
-    getPutApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions(options),
+    getPatchApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions(options),
+    queryClient,
+  );
+};
+export const deleteApiV1TaxFirmTaxFirmIdClientClientId = (
+  taxFirmId: string,
+  clientId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<DeleteTaxPersonClientResponseErrorOr>> => {
+  return axios.delete(
+    `/api/v1/TaxFirm/${taxFirmId}/Client/${clientId}`,
+    options,
+  );
+};
+
+export const getDeleteApiV1TaxFirmTaxFirmIdClientClientIdUrl = (
+  taxFirmId: string,
+  clientId: string,
+) => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/TaxFirm/${taxFirmId}/Client/${clientId}`,
+      baseURL: "",
+    });
+};
+
+export const getDeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationKey = () =>
+  ["deleteApiV1TaxFirmTaxFirmIdClientClientId"] as const;
+
+export const getDeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions = <
+  TError = AxiosError<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdClientClientId>>,
+    TError,
+    DeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
+    TContext
+  >;
+  axios?: AxiosRequestConfig;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdClientClientId>>,
+  TError,
+  DeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationKey();
+  const { mutation: mutationOptions, axios: axiosOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, axios: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdClientClientId>>,
+    DeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables
+  > = (props) => {
+    const { taxFirmId, clientId } = props ?? {};
+
+    return deleteApiV1TaxFirmTaxFirmIdClientClientId(
+      taxFirmId,
+      clientId,
+      axiosOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdClientClientId>>
+  >;
+
+export type DeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationError =
+  AxiosError<ProblemDetails>;
+export type DeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables = {
+  taxFirmId: string;
+  clientId: string;
+};
+
+export const useDeleteApiV1TaxFirmTaxFirmIdClientClientId = <
+  TError = AxiosError<ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdClientClientId>>,
+      TError,
+      DeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
+      TContext
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteApiV1TaxFirmTaxFirmIdClientClientId>>,
+  TError,
+  DeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationVariables,
+  TContext
+> => {
+  return useMutation(
+    getDeleteApiV1TaxFirmTaxFirmIdClientClientIdMutationOptions(options),
     queryClient,
   );
 };
@@ -367,3 +883,178 @@ export const usePostApiV1ClientDocuments = <
     queryClient,
   );
 };
+export const getApiV1ClientClientIdDocuments = (
+  clientId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<GetClientDocumentResponseErrorOr>> => {
+  return axios.get(`/api/v1/Client/${clientId}/Documents`, options);
+};
+
+export const getGetApiV1ClientClientIdDocumentsUrl = (clientId: string) => {
+  return axios
+    .create({
+      baseURL: "",
+      params: null,
+    })
+    .getUri({
+      url: `/api/v1/Client/${clientId}/Documents`,
+      baseURL: "",
+    });
+};
+
+export const getGetApiV1ClientClientIdDocumentsQueryKey = (
+  clientId: string,
+) => {
+  return [`/api/v1/Client/${clientId}/Documents`] as const;
+};
+
+export const getGetApiV1ClientClientIdDocumentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+  TError = AxiosError<GetClientDocumentResponse>,
+>(
+  clientId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetApiV1ClientClientIdDocumentsQueryKey(clientId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>
+  > = ({ signal }) =>
+    getApiV1ClientClientIdDocuments(clientId, { signal, ...axiosOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: clientId !== null && clientId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApiV1ClientClientIdDocumentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>
+>;
+export type GetApiV1ClientClientIdDocumentsQueryError =
+  AxiosError<GetClientDocumentResponse>;
+
+export function useGetApiV1ClientClientIdDocuments<
+  TData = Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+  TError = AxiosError<GetClientDocumentResponse>,
+>(
+  clientId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1ClientClientIdDocuments<
+  TData = Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+  TError = AxiosError<GetClientDocumentResponse>,
+>(
+  clientId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+          TError,
+          Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetApiV1ClientClientIdDocuments<
+  TData = Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+  TError = AxiosError<GetClientDocumentResponse>,
+>(
+  clientId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetApiV1ClientClientIdDocuments<
+  TData = Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+  TError = AxiosError<GetClientDocumentResponse>,
+>(
+  clientId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getApiV1ClientClientIdDocuments>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetApiV1ClientClientIdDocumentsQueryOptions(
+    clientId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

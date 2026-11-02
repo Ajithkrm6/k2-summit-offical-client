@@ -9,22 +9,269 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { GetTaxFirmResponse } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import type {
+  GetTaxFirmResponse,
+  UpdateTaxFirmRequest,
+} from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { useDeleteTaxFirm } from "@/lib/api/hooks/k2-tax-api/useDeleteTaxFirm";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
+import { useUpdateTaxFirm } from "@/lib/api/hooks/k2-tax-api/useUpdateTaxFirm";
 import { useDashboardStore } from "@/modules/dashboard/store/dashboard.store";
 import { Edit, Trash } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+
+interface EditTaxFirmFields {
+  firmName: string;
+  leadStatusTypeId: string;
+  firmTypeId: string;
+  credentialTypeId: string;
+  address: string;
+  mainPhoneNumber: string;
+  websiteUrl: string;
+  numberOfOffices: string;
+  numberOfTaxClients: string;
+  estimatedAnnualRevenue: string;
+  employeeCount: string;
+  servicesOffered: string;
+  currentSoftware: string;
+  competitorInUse: string;
+  leadSource: string;
+  referralSource: string;
+  potentialDealSize: string;
+  notes: string;
+}
+
+const numberToFormValue = (value: number | null | undefined) =>
+  value == null ? "" : String(value);
+
+const formValueToNumber = (value: string) =>
+  value.trim() === "" ? null : Number(value);
+
+const formValueToText = (value: string) => value.trim() || null;
+
+const editFirmFields: {
+  name: keyof EditTaxFirmFields;
+  label: string;
+  type?: string;
+  maxLength?: number;
+}[] = [
+  { name: "leadStatusTypeId", label: "Lead status type ID", type: "number" },
+  { name: "firmTypeId", label: "Firm type ID", type: "number" },
+  { name: "credentialTypeId", label: "Credential type ID", type: "number" },
+  { name: "firmName", label: "Firm name", maxLength: 255 },
+  { name: "address", label: "Address", maxLength: 500 },
+  { name: "mainPhoneNumber", label: "Main phone number", type: "tel" },
+  { name: "websiteUrl", label: "Website URL" },
+  { name: "numberOfOffices", label: "Number of offices", type: "number" },
+  {
+    name: "numberOfTaxClients",
+    label: "Number of tax clients",
+    type: "number",
+  },
+  {
+    name: "estimatedAnnualRevenue",
+    label: "Estimated annual revenue",
+    type: "number",
+  },
+  { name: "employeeCount", label: "Employee count", type: "number" },
+  { name: "servicesOffered", label: "Services offered" },
+  { name: "currentSoftware", label: "Current software", maxLength: 500 },
+  { name: "competitorInUse", label: "Competitor in use", maxLength: 500 },
+  { name: "leadSource", label: "Lead source", maxLength: 500 },
+  { name: "referralSource", label: "Referral source", maxLength: 500 },
+  {
+    name: "potentialDealSize",
+    label: "Potential deal size",
+    type: "number",
+  },
+  { name: "notes", label: "Notes", maxLength: 1000 },
+];
+
+const numericEditFirmFields = new Set<string>([
+  "leadStatusTypeId",
+  "firmTypeId",
+  "credentialTypeId",
+  "numberOfOffices",
+  "numberOfTaxClients",
+  "estimatedAnnualRevenue",
+  "employeeCount",
+  "potentialDealSize",
+]);
+
+const integerEditFirmFields = new Set<string>([
+  "leadStatusTypeId",
+  "firmTypeId",
+  "credentialTypeId",
+  "numberOfOffices",
+  "numberOfTaxClients",
+  "employeeCount",
+]);
+
+const getEditFirmDefaults = (firm: GetTaxFirmResponse): EditTaxFirmFields => ({
+  firmName: firm.firmName ?? "",
+  leadStatusTypeId: numberToFormValue(firm.leadStatusTypeId),
+  firmTypeId: numberToFormValue(firm.firmTypeId),
+  credentialTypeId: numberToFormValue(firm.credentialTypeId),
+  address: firm.address ?? "",
+  mainPhoneNumber: firm.mainPhoneNumber ?? "",
+  websiteUrl: firm.websiteUrl ?? "",
+  numberOfOffices: numberToFormValue(firm.numberOfOffices),
+  numberOfTaxClients: numberToFormValue(firm.numberOfTaxClients),
+  estimatedAnnualRevenue: numberToFormValue(firm.estimatedAnnualRevenue),
+  employeeCount: numberToFormValue(firm.employeeCount),
+  servicesOffered: firm.servicesOffered ?? "",
+  currentSoftware: firm.currentSoftware ?? "",
+  competitorInUse: firm.competitorInUse ?? "",
+  leadSource: firm.leadSource ?? "",
+  referralSource: firm.referralSource ?? "",
+  potentialDealSize: numberToFormValue(firm.potentialDealSize),
+  notes: firm.notes ?? "",
+});
+
+const toUpdateTaxFirmRequest = (
+  values: EditTaxFirmFields,
+): UpdateTaxFirmRequest => ({
+  leadStatusTypeId: formValueToNumber(values.leadStatusTypeId),
+  firmTypeId: formValueToNumber(values.firmTypeId),
+  credentialTypeId: formValueToNumber(values.credentialTypeId),
+  firmName: values.firmName.trim(),
+  address: formValueToText(values.address),
+  mainPhoneNumber: formValueToText(values.mainPhoneNumber),
+  websiteUrl: formValueToText(values.websiteUrl),
+  numberOfOffices: formValueToNumber(values.numberOfOffices),
+  numberOfTaxClients: formValueToNumber(values.numberOfTaxClients),
+  estimatedAnnualRevenue: formValueToNumber(values.estimatedAnnualRevenue),
+  employeeCount: formValueToNumber(values.employeeCount),
+  servicesOffered: formValueToText(values.servicesOffered),
+  currentSoftware: formValueToText(values.currentSoftware),
+  competitorInUse: formValueToText(values.competitorInUse),
+  leadSource: formValueToText(values.leadSource),
+  referralSource: formValueToText(values.referralSource),
+  potentialDealSize: formValueToNumber(values.potentialDealSize),
+  notes: formValueToText(values.notes),
+});
+
+const defaultEditFirmValues: EditTaxFirmFields = {
+  firmName: "",
+  leadStatusTypeId: "",
+  firmTypeId: "",
+  credentialTypeId: "",
+  address: "",
+  mainPhoneNumber: "",
+  websiteUrl: "",
+  numberOfOffices: "",
+  numberOfTaxClients: "",
+  estimatedAnnualRevenue: "",
+  employeeCount: "",
+  servicesOffered: "",
+  currentSoftware: "",
+  competitorInUse: "",
+  leadSource: "",
+  referralSource: "",
+  potentialDealSize: "",
+  notes: "",
+};
+
+const editFirmFieldRules = (name: keyof EditTaxFirmFields) => {
+  if (name === "firmName") {
+    return { required: "Firm name is required", maxLength: 255 };
+  }
+
+  if (name === "mainPhoneNumber") {
+    return { pattern: /^[\d\-+()\s]*$/ };
+  }
+
+  if (numericEditFirmFields.has(name)) {
+    return {
+      validate: (value: string) => {
+        if (!value.trim()) return true;
+        const number = Number(value);
+        if (!Number.isFinite(number) || number < 0) return false;
+        return !integerEditFirmFields.has(name) || Number.isInteger(number);
+      },
+    };
+  }
+
+  if (name === "address") return { maxLength: 500 };
+  if (name === "websiteUrl") {
+    return {
+      validate: (value: string) => {
+        if (!value.trim()) return true;
+        try {
+          new URL(value.startsWith("http") ? value : `https://${value}`);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    };
+  }
+  if (name === "notes") return { maxLength: 1000 };
+  return { maxLength: 500 };
+};
 
 export default function DashboardPage() {
   const { stats } = useDashboardStore();
   const { taxFirms, isLoading } = useGetTaxFirms();
+  const [editingFirm, setEditingFirm] = useState<GetTaxFirmResponse | null>(
+    null,
+  );
+  const [deletingFirm, setDeletingFirm] = useState<GetTaxFirmResponse | null>(
+    null,
+  );
+  const { updateTaxFirm, isPending: isUpdating } = useUpdateTaxFirm({
+    onSuccess: () => setEditingFirm(null),
+  });
+  const { deleteTaxFirm, isPending: isDeleting } = useDeleteTaxFirm({
+    onSuccess: () => setDeletingFirm(null),
+  });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isDirty, errors },
+  } = useForm<EditTaxFirmFields>({
+    mode: "onChange",
+    defaultValues: defaultEditFirmValues,
+  });
 
   // Only log when taxFirms actually has data
   useEffect(() => {
     console.log("taxFirms", taxFirms);
   }, [taxFirms]);
+
+  const openEditDialog = (firm: GetTaxFirmResponse) => {
+    reset(getEditFirmDefaults(firm));
+    setEditingFirm(firm);
+  };
+
+  const submitFirmUpdate = (values: EditTaxFirmFields) => {
+    if (!editingFirm?.taxFirmId) {
+      return;
+    }
+
+    updateTaxFirm(editingFirm.taxFirmId, toUpdateTaxFirmRequest(values));
+  };
+
+  const confirmFirmDelete = () => {
+    if (deletingFirm?.taxFirmId) {
+      deleteTaxFirm(deletingFirm.taxFirmId);
+    }
+  };
+
   return (
     <div className="space-y-8 min-h-full">
       {/* Welcome Header */}
@@ -106,7 +353,10 @@ export default function DashboardPage() {
                   Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-foreground uppercase tracking-wider">
-                  Status
+                  Client Count
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground uppercase tracking-wider">
+                  Contact Count
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-foreground uppercase tracking-wider">
                   Action
@@ -148,16 +398,21 @@ export default function DashboardPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge variant="secondary">{firm.mainPhoneNumber}</Badge>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={firm.isActive ? "default" : "outline"}>
-                        {firm.isActive ? "Active" : "Inactive"}
-                      </Badge>
+
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-muted-foreground">
+                      {firm.taxPersonClientCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-muted-foreground">
+                      {firm.taxFirmContactCount}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        aria-label={`Edit ${firm.firmName || "tax firm"}`}
+                        disabled={!firm.taxFirmId}
+                        onClick={() => openEditDialog(firm)}
                       >
                         <Edit size={16} />
                       </Button>
@@ -165,6 +420,9 @@ export default function DashboardPage() {
                         variant="ghost"
                         size="sm"
                         className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        aria-label={`Delete ${firm.firmName || "tax firm"}`}
+                        disabled={!firm.taxFirmId}
+                        onClick={() => setDeletingFirm(firm)}
                       >
                         <Trash size={16} />
                       </Button>
@@ -176,6 +434,126 @@ export default function DashboardPage() {
           </table>
         </div>
       </div>
+
+      <Dialog
+        open={Boolean(editingFirm)}
+        onOpenChange={(open) => {
+          if (!open && !isUpdating) {
+            setEditingFirm(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit tax firm</DialogTitle>
+            <DialogDescription>
+              Update the firm details. Save becomes available when you make a
+              valid change.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(submitFirmUpdate)} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {editFirmFields.map(({ name, label, type, maxLength }) => {
+                const fieldError = errors[name]?.message;
+                const fieldId = `editFirm-${name}`;
+
+                return (
+                  <div
+                    key={name}
+                    className={`space-y-2 ${name === "notes" ? "sm:col-span-2" : ""}`}
+                  >
+                    <Label htmlFor={fieldId}>{label}</Label>
+                    {name === "notes" ? (
+                      <Textarea
+                        id={fieldId}
+                        aria-invalid={Boolean(fieldError)}
+                        {...register(name, editFirmFieldRules(name))}
+                        maxLength={maxLength}
+                      />
+                    ) : (
+                      <Input
+                        id={fieldId}
+                        type={type ?? "text"}
+                        aria-invalid={Boolean(fieldError)}
+                        min={numericEditFirmFields.has(name) ? 0 : undefined}
+                        step={
+                          integerEditFirmFields.has(name)
+                            ? 1
+                            : name === "estimatedAnnualRevenue" ||
+                                name === "potentialDealSize"
+                              ? "any"
+                              : undefined
+                        }
+                        {...register(name, editFirmFieldRules(name))}
+                        maxLength={maxLength}
+                      />
+                    )}
+                    {fieldError && (
+                      <p className="text-sm text-destructive" role="alert">
+                        {fieldError}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingFirm(null)}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!isDirty || isUpdating}>
+                {isUpdating ? "Saving..." : "Save changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(deletingFirm)}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setDeletingFirm(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete tax firm?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete{" "}
+              <span className="font-medium text-destructive">
+                {deletingFirm?.firmName || "this tax firm"}
+              </span>
+              . Related clients, contacts, and activity records may also be
+              deleted. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeletingFirm(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmFirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete tax firm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Quick Actions */}
       {/* <div>

@@ -1,5 +1,9 @@
 import { toast } from "@/components/ui/toast";
-import { usePostApiV1TaxFirmTaxfirmidTaxPersonClient } from "@/lib/api/generated/k2-tax-api";
+import {
+  getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey,
+  usePostApiV1TaxFirmTaxfirmidTaxPersonClient,
+} from "@/lib/api/generated/k2-tax-api";
+import { useQueryClient } from "@tanstack/react-query";
 import type { CreateTaxPersonClientRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import type { CreateTaxClientFormData } from "@/modules/crm/lib";
 import type { AxiosError } from "axios";
@@ -17,10 +21,16 @@ interface UseAddTaxClientProps {
  * - Provides toast notifications for user feedback
  */
 export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
+  const queryClient = useQueryClient();
   const { mutate, isPending, isSuccess, error } =
     usePostApiV1TaxFirmTaxfirmidTaxPersonClient({
       mutation: {
-        onSuccess: () => {
+        onSuccess: async (_response, variables) => {
+          await queryClient.invalidateQueries({
+            queryKey: getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey(
+              variables.taxfirmid,
+            ),
+          });
           toast.add({
             title: "Tax client added successfully",
             description: "The tax client has been added to the firm",

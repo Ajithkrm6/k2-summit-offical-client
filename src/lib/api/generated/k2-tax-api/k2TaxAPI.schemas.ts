@@ -318,6 +318,78 @@ export interface CredentialsTypeResponse {
   name?: string | null;
 }
 
+export interface DeleteLogActivityResponse {
+  /** @nullable */
+  logActivityId?: string | null;
+}
+
+export interface DeleteLogActivityResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: DeleteLogActivityResponse;
+  firstError?: Error;
+}
+
+export interface DeleteTaxFirmContactResponse {
+  /** @nullable */
+  contactId?: string | null;
+}
+
+export interface DeleteTaxFirmContactResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: DeleteTaxFirmContactResponse;
+  firstError?: Error;
+}
+
+export interface DeleteTaxFirmResponse {
+  /** @nullable */
+  taxFirmId?: string | null;
+  /** @nullable */
+  contactIds?: string[] | null;
+  /** @nullable */
+  clientIds?: string[] | null;
+  /** @nullable */
+  logActivityIds?: string[] | null;
+  /** @nullable */
+  taxFirmAddressIds?: string[] | null;
+  /** @nullable */
+  clientAddressIds?: string[] | null;
+}
+
+export interface DeleteTaxFirmResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: DeleteTaxFirmResponse;
+  firstError?: Error;
+}
+
+export interface DeleteTaxPersonClientResponse {
+  /** @nullable */
+  taxPersonClientId?: string | null;
+  /** @nullable */
+  taxFirmId?: string | null;
+}
+
+export interface DeleteTaxPersonClientResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: DeleteTaxPersonClientResponse;
+  firstError?: Error;
+}
+
 export interface FirmTypeResponse {
   firmTypeId?: number;
   /** @nullable */
@@ -341,6 +413,68 @@ export interface ForgotPasswordResponseErrorOr {
   readonly errorsOrEmptyList?: readonly Error[] | null;
   value?: ForgotPasswordResponse;
   firstError?: Error;
+}
+
+export interface GetTaxPersonClientByTaxFirmIdResponse {
+  /** @nullable */
+  taxPersonClientId?: string | null;
+  /** @nullable */
+  taxpayerFirstName?: string | null;
+  /** @nullable */
+  taxpayerLastName?: string | null;
+  taxYear?: number;
+  /** @nullable */
+  taxpayerSsn?: string | null;
+  /** @nullable */
+  taxpayerDob?: string | null;
+  /** @nullable */
+  phoneNumber?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  preferredContactMethodTypeId?: number | null;
+}
+
+export interface GetTaxFirmContactByTaxFirmIdResponse {
+  /** @nullable */
+  contactId?: string | null;
+  roleTitleTypeId?: number;
+  /** @nullable */
+  preferredContactMethodTypeId?: number | null;
+  /** @nullable */
+  phoneNumber?: string | null;
+  /** @nullable */
+  cellPhone?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  isPrimaryContact?: boolean;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export interface GetLogActivityByTaxFirmIdResponse {
+  /** @nullable */
+  logActivityId?: string | null;
+  /** @nullable */
+  contactId?: string | null;
+  activityDate?: string;
+  activityTypeId?: number;
+  /** @nullable */
+  summary?: string | null;
+  /** @nullable */
+  outcome?: string | null;
+  /** @nullable */
+  nextFollowUpDate?: string | null;
+  /** @nullable */
+  loggedBy?: string | null;
+  /** @nullable */
+  countryId?: string | null;
 }
 
 export interface GetTaxFirmResponse {
@@ -380,7 +514,15 @@ export interface GetTaxFirmResponse {
   potentialDealSize?: number | null;
   /** @nullable */
   notes?: string | null;
-  isActive?: boolean;
+  taxPersonClientCount?: number;
+  taxFirmContactCount?: number;
+  logActivityCount?: number;
+  /** @nullable */
+  taxPersonClients?: GetTaxPersonClientByTaxFirmIdResponse[] | null;
+  /** @nullable */
+  taxFirmContacts?: GetTaxFirmContactByTaxFirmIdResponse[] | null;
+  /** @nullable */
+  logActivities?: GetLogActivityByTaxFirmIdResponse[] | null;
 }
 
 export interface GetAllTaxFirmResponse {
@@ -396,6 +538,130 @@ export interface GetAllTaxFirmResponseListErrorOr {
   readonly errorsOrEmptyList?: readonly Error[] | null;
   /** @nullable */
   readonly value?: readonly GetAllTaxFirmResponse[] | null;
+  firstError?: Error;
+}
+
+export interface TaxStrategyDocumentResponse {
+  taxStrategyDocumentId?: string;
+  version?: number;
+  /** @nullable */
+  taxStrategyUrl?: string | null;
+  /** @nullable */
+  fileName?: string | null;
+  /** @nullable */
+  formType?: string | null;
+  /** @nullable */
+  status?: string | null;
+  /** @nullable */
+  statusReason?: string | null;
+  missingRequiredFields?: unknown;
+  strategyResults?: unknown;
+  /** @nullable */
+  reportPushedAt?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
+  updatedAt?: string | null;
+}
+
+export interface GetClientDocumentResponse {
+  documentId?: string;
+  /** @nullable */
+  fileName?: string | null;
+  /** @nullable */
+  storageUri?: string | null;
+  /** @nullable */
+  mimeType?: string | null;
+  /** @nullable */
+  fileHash?: string | null;
+  /** @nullable */
+  extractionStatus?: string | null;
+  /** @nullable */
+  primaryFormCode?: string | null;
+  /** @nullable */
+  taxYear?: number | null;
+  /** @nullable */
+  uploadedAt?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
+  updatedAt?: string | null;
+  /** @nullable */
+  version?: number | null;
+  taxStrategy?: TaxStrategyDocumentResponse;
+}
+
+export interface GetClientDocumentResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: GetClientDocumentResponse;
+  firstError?: Error;
+}
+
+export interface GetLogActivityResponse {
+  /** @nullable */
+  logActivityId?: string | null;
+  /** @nullable */
+  taxFirmId?: string | null;
+  /** @nullable */
+  contactId?: string | null;
+  activityDate?: string;
+  activityTypeId?: number;
+  /** @nullable */
+  summary?: string | null;
+  /** @nullable */
+  outcome?: string | null;
+  /** @nullable */
+  nextFollowUpDate?: string | null;
+  /** @nullable */
+  loggedBy?: string | null;
+  /** @nullable */
+  countryId?: string | null;
+}
+
+export interface GetLogActivityResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: GetLogActivityResponse;
+  firstError?: Error;
+}
+
+export interface GetTaxFirmContactResponse {
+  /** @nullable */
+  contactId?: string | null;
+  /** @nullable */
+  taxFirmId?: string | null;
+  roleTitleTypeId?: number;
+  /** @nullable */
+  preferredContactMethodTypeId?: number | null;
+  /** @nullable */
+  phoneNumber?: string | null;
+  /** @nullable */
+  cellPhone?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  isPrimaryContact?: boolean;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export interface GetTaxFirmContactResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: GetTaxFirmContactResponse;
   firstError?: Error;
 }
 
@@ -417,6 +683,40 @@ export interface GetTaxFirmResponseListErrorOr {
   readonly errorsOrEmptyList?: readonly Error[] | null;
   /** @nullable */
   readonly value?: readonly GetTaxFirmResponse[] | null;
+  firstError?: Error;
+}
+
+export interface GetTaxPersonClientResponse {
+  /** @nullable */
+  taxPersonClientId?: string | null;
+  /** @nullable */
+  taxFirmId?: string | null;
+  /** @nullable */
+  taxpayerFirstName?: string | null;
+  /** @nullable */
+  taxpayerLastName?: string | null;
+  taxYear?: number;
+  /** @nullable */
+  taxpayerSsn?: string | null;
+  /** @nullable */
+  taxpayerDob?: string | null;
+  /** @nullable */
+  phoneNumber?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  preferredContactMethodTypeId?: number | null;
+}
+
+export interface GetTaxPersonClientResponseErrorOr {
+  readonly isError?: boolean;
+  /** @nullable */
+  readonly errors?: readonly Error[] | null;
+  /** @nullable */
+  readonly errorsOrEmptyList?: readonly Error[] | null;
+  value?: GetTaxPersonClientResponse;
   firstError?: Error;
 }
 
@@ -465,6 +765,18 @@ export interface LogoutUserResponseErrorOr {
   firstError?: Error;
 }
 
+export interface RoleTitleTypeResponse {
+  roleTitleTypeId?: number;
+  /** @nullable */
+  name?: string | null;
+}
+
+export interface PreferredContactMethodTypeResponse {
+  preferredContactMethodTypeId?: number;
+  /** @nullable */
+  contactMethodType?: string | null;
+}
+
 export interface LookupResponse {
   /** @nullable */
   contactTypes?: ContactTypeResponse[] | null;
@@ -478,6 +790,10 @@ export interface LookupResponse {
   credentialsTypes?: CredentialsTypeResponse[] | null;
   /** @nullable */
   leadStatusTypes?: LeadStatusTypeResponse[] | null;
+  /** @nullable */
+  roleTitleTypes?: RoleTitleTypeResponse[] | null;
+  /** @nullable */
+  preferredContactMethodTypes?: PreferredContactMethodTypeResponse[] | null;
 }
 
 export interface LookupResponseErrorOr {
@@ -529,20 +845,11 @@ export interface ResetPasswordResultErrorOr {
   firstError?: Error;
 }
 
-export interface StringErrorOr {
-  readonly isError?: boolean;
-  /** @nullable */
-  readonly errors?: readonly Error[] | null;
-  /** @nullable */
-  readonly errorsOrEmptyList?: readonly Error[] | null;
-  /** @nullable */
-  readonly value?: string | null;
-  firstError?: Error;
-}
-
 export interface UpdateLogActivityRequest {
-  activityDate?: string;
-  activityTypeId?: number;
+  /** @nullable */
+  activityDate?: string | null;
+  /** @nullable */
+  activityTypeId?: number | null;
   /** @nullable */
   summary?: string | null;
   /** @nullable */
@@ -571,7 +878,8 @@ export interface UpdateLogActivityResponseErrorOr {
 }
 
 export interface UpdateTaxFirmContactRequest {
-  roleTitleTypeId?: number;
+  /** @nullable */
+  roleTitleTypeId?: number | null;
   /** @nullable */
   preferredContactMethodTypeId?: number | null;
   /** @nullable */
@@ -586,14 +894,15 @@ export interface UpdateTaxFirmContactRequest {
   email?: string | null;
   /** @nullable */
   bestTimeToReach?: string | null;
-  isPrimaryContact?: boolean;
+  /** @nullable */
+  isPrimaryContact?: boolean | null;
   /** @nullable */
   notes?: string | null;
 }
 
 export interface UpdateTaxFirmContactResponse {
   /** @nullable */
-  taxFirmContactId?: string | null;
+  contactId?: string | null;
   roleTitleTypeId?: number;
   /** @nullable */
   preferredContactMethodTypeId?: number | null;
@@ -610,8 +919,10 @@ export interface UpdateTaxFirmContactResponseErrorOr {
 }
 
 export interface UpdateTaxFirmRequest {
-  leadStatusTypeId?: number;
-  firmTypeId?: number;
+  /** @nullable */
+  leadStatusTypeId?: number | null;
+  /** @nullable */
+  firmTypeId?: number | null;
   /** @nullable */
   credentialTypeId?: number | null;
   /** @nullable */
@@ -666,7 +977,8 @@ export interface UpdateTaxPersonClientRequest {
   taxpayerFirstName?: string | null;
   /** @nullable */
   taxpayerLastName?: string | null;
-  taxYear?: number;
+  /** @nullable */
+  taxYear?: number | null;
   /** @nullable */
   taxpayerSsn?: string | null;
   /** @nullable */

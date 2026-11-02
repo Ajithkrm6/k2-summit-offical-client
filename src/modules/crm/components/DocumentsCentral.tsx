@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import type { PostApiV1ClientDocumentsBody } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { useGetTaxClients } from "@/lib/api/hooks/k2-tax-api/useGetTaxClients";
+import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
 import { useUploadDocuments } from "@/lib/api/hooks/k2-tax-api/useUploadDocuments";
 import {
   uploadDocumentsSchema,
@@ -24,15 +26,20 @@ import { useCRMStore } from "@/modules/crm/store/crm.store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-
 /**
  * Document Upload Form Schema
  */
 
 export const DocumentsCentral = () => {
+  const {
+    taxFirms,
+    isLoading: firmsLoading,
+    error: firmsError,
+  } = useGetTaxFirms();
   const { uploadDocuments, isPending, isSuccess } = useUploadDocuments();
   const { error, setSuccess } = useCRMStore();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedFirmId, setSelectedFirmId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -48,18 +55,34 @@ export const DocumentsCentral = () => {
       formType: "",
     },
   });
+  const firmOptions = taxFirms.flatMap((firm) =>
+    firm.taxFirmId
+      ? [{ id: firm.taxFirmId, name: firm.firmName || "Unknown" }]
+      : [],
+  );
 
-  // Tax person clients - real IDs from database
-  const taxClients = [
-    { id: "TC0021", label: "TC0021-client-2", value: "TC0021" },
-    { id: "TC0030", label: "TC0030-client-3", value: "TC0030" },
-    { id: "TC0040", label: "TC0040-client-4", value: "TC0040" },
-    { id: "TC0044", label: "TC0044-client-5", value: "TC0044" },
-    { id: "TC0045", label: "TC0045-client-6", value: "TC0045" },
-    { id: "TC0054", label: "TC0054-client-8", value: "TC0054" },
-    { id: "TC0071", label: "TC0071-client-9", value: "TC0071" },
-    { id: "TC0077", label: "TC0077-client-10", value: "TC0077" },
-  ];
+  const {
+    taxClients,
+    isLoading: clientsLoading,
+    error: clientsError,
+    refetch,
+  } = useGetTaxClients(selectedFirmId);
+
+  const clientOptions = taxClients.flatMap((client) => {
+    if (!client.taxPersonClientId) {
+      return [];
+    }
+
+    return [
+      {
+        id: client.taxPersonClientId,
+        label:
+          [client.taxpayerFirstName, client.taxpayerLastName]
+            .filter(Boolean)
+            .join(" ") || "Unknown client",
+      },
+    ];
+  });
 
   const documentTypes = [
     { id: "1040", label: "Form 1040 - Individual Income Tax" },
@@ -127,10 +150,62 @@ export const DocumentsCentral = () => {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+      {firmsError && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Failed to load firms: {firmsError.message}
+          </AlertDescription>
+        </Alert>
+      )}
+      {clientsError && selectedFirmId && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Failed to load tax clients: {clientsError.message}
+          </AlertDescription>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void refetch()}
+          >
+            Retry
+          </Button>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Form Fields Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firmSelect">Select Firm *</Label>
+            <Select
+              value={selectedFirmId}
+              onValueChange={(value) => setSelectedFirmId(value ?? "")}
+            >
+              <SelectTrigger id="firmSelect" className="w-full">
+                <SelectValue placeholder="Select a firm" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Available Firms</SelectLabel>
+                  {firmsLoading ? (
+                    <SelectItem value="loading" disabled>
+                      Loading firms...
+                    </SelectItem>
+                  ) : firmOptions.length === 0 ? (
+                    <SelectItem value="empty" disabled>
+                      No firms available
+                    </SelectItem>
+                  ) : (
+                    firmOptions.map((firm) => (
+                      <SelectItem key={firm.id} value={firm.id}>
+                        {firm.name} ({firm.id})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
           {/* Tax Client */}
           <div className="space-y-2">
             <Label htmlFor="taxPersonClientId">Tax Client *</Label>
@@ -138,7 +213,7 @@ export const DocumentsCentral = () => {
               name="taxPersonClientId"
               control={control}
               render={({ field }) => {
-                const selectedItem = taxClients.find(
+                const selectedItem = clientOptions.find(
                   (item) => item.id === field.value,
                 );
                 return (
@@ -154,11 +229,21 @@ export const DocumentsCentral = () => {
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Tax Clients</SelectLabel>
-                        {taxClients.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.label}
+                        {clientsLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Loading clients...
                           </SelectItem>
-                        ))}
+                        ) : clientOptions.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            No clients available
+                          </SelectItem>
+                        ) : (
+                          clientOptions.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.label}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>

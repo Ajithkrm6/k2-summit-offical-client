@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CreateTaxClientFormData } from "../../../../modules/crm/lib";
 
-const { mutate, useMutation, notify } = vi.hoisted(() => ({
+const { mutate, useMutation, notify, invalidateQueries } = vi.hoisted(() => ({
   mutate: vi.fn(),
   useMutation: vi.fn(),
   notify: vi.fn(),
+  invalidateQueries: vi.fn(),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries }),
 }));
 
 vi.mock("@/components/ui/toast", () => ({
@@ -13,6 +18,9 @@ vi.mock("@/components/ui/toast", () => ({
 
 vi.mock("@/lib/api/generated/k2-tax-api", () => ({
   usePostApiV1TaxFirmTaxfirmidTaxPersonClient: useMutation,
+  getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey: (id: string) => [
+    `/api/v1/TaxFirm/${id}/TaxPersonClients`,
+  ],
 }));
 
 import { useAddTaxClient } from "./useAddTaxClient";
@@ -109,5 +117,18 @@ describe("useAddTaxClient", () => {
     expect(result.isPending).toBe(true);
     expect(result.isSuccess).toBe(false);
     expect(result.error).toBe(error);
+  });
+
+  it("invalidates the created client's firm list before the success callback", async () => {
+    const onSuccess = vi.fn();
+    useAddTaxClient({ onSuccess });
+    await useMutation.mock.calls[0][0].mutation.onSuccess(
+      { data: {} },
+      { taxfirmid: form.firmId },
+    );
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: [`/api/v1/TaxFirm/${form.firmId}/TaxPersonClients`],
+    });
+    expect(onSuccess).toHaveBeenCalledOnce();
   });
 });

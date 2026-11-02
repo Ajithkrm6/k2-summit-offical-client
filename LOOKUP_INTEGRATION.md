@@ -15,11 +15,15 @@ The lookup API endpoint (`/api/v1/lookup`) has been integrated into the AddConta
   last name, role/title, and preferred contact method errors. Native browser
   validation is disabled so inline errors appear together on submit. Optional
   email may be blank, but populated email and phone values are validated.
-- The generated API currently exposes contact creation and update mutations,
-  but no contacts retrieval query. The table therefore explicitly displays an
-  unavailable-data message, not mock rows or a misleading "no contacts" state.
-  Once retrieval is available, show all contacts the user is authorized to view
-  and invalidate that query after successful creation.
+- `useGetContacts(taxFirmId)` wraps the generated
+  `useGetApiV1TaxFirmTaxFirmIdTaxFirmContacts` query for
+  `GET /api/v1/TaxFirm/{taxFirmId}/TaxFirmContacts`. Requests are disabled until
+  a firm is selected, and the Axios response array is exposed as `contacts`.
+  The table handles selection, loading, error/retry, empty, and populated states.
+  Roles are displayed by ID because the contacts response contains role IDs,
+  not role names.
+- `useAddContact` invalidates the created contact's firm query after success.
+  Remote data and request state stay in TanStack Query; no new store is needed.
 
 ## Add Tax Client form pattern
 
@@ -27,10 +31,14 @@ The lookup API endpoint (`/api/v1/lookup`) has been integrated into the AddConta
   action and saved-clients table layout (Name, Firm, Tax Year, Email, Phone).
 - `/crm/addTaxClient/new` renders the creation form. Back, Cancel, and successful
   creation return to the landing page. Failed submissions preserve the form.
-- No tax-client retrieval endpoint is currently generated. The table explicitly
-  reports unavailable data until that API is available; it does not display mock
-  clients or claim that no saved clients exist. When retrieval is integrated,
-  invalidate its query after successful creation.
+- `useGetTaxClients(taxFirmId)` wraps the generated
+  `useGetApiV1TaxFirmTaxFirmIdTaxPersonClients` query for
+  `GET /api/v1/TaxFirm/{taxFirmId}/TaxPersonClients`. It unwraps the Axios response
+  array and disables fetching until a firm is selected. Query keys scope cached
+  lists to each firm; the page displays selection, loading, error/retry, empty,
+  and populated states. SSNs and dates of birth are not displayed in the table.
+- `useAddTaxClient` invalidates the created client's firm list after successful
+  creation. Query state remains in TanStack Query; no additional store is needed.
 
 - `src/modules/crm/lib/schemas.ts` exports `createTaxClientSchema` and the inferred
   `CreateTaxClientFormData` type through the CRM library barrel.

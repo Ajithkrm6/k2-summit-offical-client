@@ -27,13 +27,13 @@ import type {
   CreateTaxFirmRequest,
   CreateTaxFirmResponse,
   CreateTaxFirmResponseErrorOr,
+  DeleteTaxFirmResponseErrorOr,
   GetAllTaxFirmResponse,
   GetAllTaxFirmResponseListErrorOr,
   GetTaxFirmResponse,
   GetTaxFirmResponseErrorOr,
   GetTaxFirmResponseListErrorOr,
   ProblemDetails,
-  StringErrorOr,
   UpdateTaxFirmRequest,
   UpdateTaxFirmResponse,
   UpdateTaxFirmResponseErrorOr,
@@ -320,19 +320,19 @@ export function useGetApiV1TaxFirmTaxFirmId<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const putApiV1TaxFirmTaxFirmId = (
+export const patchApiV1TaxFirmTaxFirmId = (
   taxFirmId: string,
   updateTaxFirmRequest?: UpdateTaxFirmRequest,
   options?: AxiosRequestConfig,
 ): Promise<AxiosResponse<UpdateTaxFirmResponseErrorOr>> => {
-  return axios.put(
+  return axios.patch(
     `/api/v1/TaxFirm/${taxFirmId}`,
     updateTaxFirmRequest,
     options,
   );
 };
 
-export const getPutApiV1TaxFirmTaxFirmIdUrl = (taxFirmId: string) => {
+export const getPatchApiV1TaxFirmTaxFirmIdUrl = (taxFirmId: string) => {
   return axios
     .create({
       baseURL: "",
@@ -344,27 +344,27 @@ export const getPutApiV1TaxFirmTaxFirmIdUrl = (taxFirmId: string) => {
     });
 };
 
-export const getPutApiV1TaxFirmTaxFirmIdMutationKey = () =>
-  ["putApiV1TaxFirmTaxFirmId"] as const;
+export const getPatchApiV1TaxFirmTaxFirmIdMutationKey = () =>
+  ["patchApiV1TaxFirmTaxFirmId"] as const;
 
-export const getPutApiV1TaxFirmTaxFirmIdMutationOptions = <
+export const getPatchApiV1TaxFirmTaxFirmIdMutationOptions = <
   TError = AxiosError<ProblemDetails | UpdateTaxFirmResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmId>>,
+    Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmId>>,
     TError,
-    PutApiV1TaxFirmTaxFirmIdMutationVariables,
+    PatchApiV1TaxFirmTaxFirmIdMutationVariables,
     TContext
   >;
   axios?: AxiosRequestConfig;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmId>>,
+  Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmId>>,
   TError,
-  PutApiV1TaxFirmTaxFirmIdMutationVariables,
+  PatchApiV1TaxFirmTaxFirmIdMutationVariables,
   TContext
 > => {
-  const mutationKey = getPutApiV1TaxFirmTaxFirmIdMutationKey();
+  const mutationKey = getPatchApiV1TaxFirmTaxFirmIdMutationKey();
   const { mutation: mutationOptions, axios: axiosOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -374,59 +374,59 @@ export const getPutApiV1TaxFirmTaxFirmIdMutationOptions = <
     : { mutation: { mutationKey }, axios: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmId>>,
-    PutApiV1TaxFirmTaxFirmIdMutationVariables
+    Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmId>>,
+    PatchApiV1TaxFirmTaxFirmIdMutationVariables
   > = (props) => {
     const { taxFirmId, data } = props ?? {};
 
-    return putApiV1TaxFirmTaxFirmId(taxFirmId, data, axiosOptions);
+    return patchApiV1TaxFirmTaxFirmId(taxFirmId, data, axiosOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type PutApiV1TaxFirmTaxFirmIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmId>>
+export type PatchApiV1TaxFirmTaxFirmIdMutationResult = NonNullable<
+  Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmId>>
 >;
-export type PutApiV1TaxFirmTaxFirmIdMutationBody =
+export type PatchApiV1TaxFirmTaxFirmIdMutationBody =
   UpdateTaxFirmRequest | undefined;
-export type PutApiV1TaxFirmTaxFirmIdMutationError = AxiosError<
+export type PatchApiV1TaxFirmTaxFirmIdMutationError = AxiosError<
   ProblemDetails | UpdateTaxFirmResponse
 >;
-export type PutApiV1TaxFirmTaxFirmIdMutationVariables = {
+export type PatchApiV1TaxFirmTaxFirmIdMutationVariables = {
   taxFirmId: string;
   data?: UpdateTaxFirmRequest;
 };
 
-export const usePutApiV1TaxFirmTaxFirmId = <
+export const usePatchApiV1TaxFirmTaxFirmId = <
   TError = AxiosError<ProblemDetails | UpdateTaxFirmResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmId>>,
+      Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmId>>,
       TError,
-      PutApiV1TaxFirmTaxFirmIdMutationVariables,
+      PatchApiV1TaxFirmTaxFirmIdMutationVariables,
       TContext
     >;
     axios?: AxiosRequestConfig;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof putApiV1TaxFirmTaxFirmId>>,
+  Awaited<ReturnType<typeof patchApiV1TaxFirmTaxFirmId>>,
   TError,
-  PutApiV1TaxFirmTaxFirmIdMutationVariables,
+  PatchApiV1TaxFirmTaxFirmIdMutationVariables,
   TContext
 > => {
   return useMutation(
-    getPutApiV1TaxFirmTaxFirmIdMutationOptions(options),
+    getPatchApiV1TaxFirmTaxFirmIdMutationOptions(options),
     queryClient,
   );
 };
 export const deleteApiV1TaxFirmTaxFirmId = (
   taxFirmId: string,
   options?: AxiosRequestConfig,
-): Promise<AxiosResponse<StringErrorOr>> => {
+): Promise<AxiosResponse<DeleteTaxFirmResponseErrorOr>> => {
   return axios.delete(`/api/v1/TaxFirm/${taxFirmId}`, options);
 };
 

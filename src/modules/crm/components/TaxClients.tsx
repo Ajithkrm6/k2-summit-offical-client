@@ -1,7 +1,55 @@
-import { buttonVariants } from "@/components/ui/button";
+"use client";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useGetTaxClients } from "@/lib/api/hooks/k2-tax-api/useGetTaxClients";
+import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
 import Link from "next/link";
+import { useEffect } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 export const TaxClients = () => {
+  const { taxFirms, isLoading, error: firmsError } = useGetTaxFirms();
+  const { control, setValue } = useForm<{ firmId: string }>({
+    defaultValues: { firmId: "" },
+  });
+  // Extract firm IDs and names from taxFirms data
+  const firmOptions = taxFirms.flatMap((firm) =>
+    firm.taxFirmId
+      ? [{ id: firm.taxFirmId, name: firm.firmName || "Unknown" }]
+      : [],
+  );
+  const selectedFirmValue = useWatch({ control, name: "firmId" });
+  const firstFirmId = firmOptions[0]?.id ?? "";
+  const selectedFirmId = selectedFirmValue || firstFirmId;
+
+  useEffect(() => {
+    if (!selectedFirmValue && firstFirmId) {
+      setValue("firmId", firstFirmId);
+    }
+  }, [firstFirmId, selectedFirmValue, setValue]);
+
+  const {
+    taxClients,
+    isLoading: clientsLoading,
+    error,
+    refetch,
+  } = useGetTaxClients(selectedFirmId);
+
+  const selectedFirmName = firmOptions.find(
+    (firm) => firm.id === selectedFirmId,
+  )?.name;
+
   return (
     <div className="container min-h-screen space-y-6 rounded-lg bg-white p-4">
       <section
@@ -36,10 +84,67 @@ export const TaxClients = () => {
             id="tax-clients-availability"
             className="mt-1 text-sm text-gray-600"
           >
-            Tax client listing is not connected yet. Saved tax clients will
-            appear here once the tax clients retrieval API is available.
+            Select a firm to view its saved tax clients.
           </p>
         </div>
+        <div className="space-y-4 flex flex-col ">
+          <div className="space-y-2">
+            <Label htmlFor="firmSelect">Select Firm *</Label>
+            <Controller
+              name="firmId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value || firstFirmId}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger id="firmSelect" className="w-full">
+                    <SelectValue placeholder="Select a firm" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Available Firms</SelectLabel>
+                      {isLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading firms...
+                        </SelectItem>
+                      ) : firmOptions.length === 0 ? (
+                        <SelectItem value="empty" disabled>
+                          No firms available
+                        </SelectItem>
+                      ) : (
+                        firmOptions.map((firm) => (
+                          <SelectItem key={firm.id} value={firm.id}>
+                            {firm.name} ({firm.id})
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {firmsError && (
+              <Alert variant="destructive">
+                <AlertDescription>{firmsError.message}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+        </div>
+        {error && selectedFirmId && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Failed to load tax clients: {error.message}
+            </AlertDescription>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void refetch()}
+            >
+              Retry
+            </Button>
+          </Alert>
+        )}
         <div className="overflow-x-auto rounded-lg border">
           <table
             className="w-full text-left text-sm"
@@ -62,14 +167,50 @@ export const TaxClients = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-10 text-center text-gray-500"
-                >
-                  Tax client data is currently unavailable.
-                </td>
-              </tr>
+              {!selectedFirmId ||
+              clientsLoading ||
+              error ||
+              taxClients.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-10 text-center text-gray-500"
+                  >
+                    {!selectedFirmId
+                      ? "Select a firm to view tax clients."
+                      : clientsLoading
+                        ? "Loading tax clients..."
+                        : error
+                          ? "Tax clients could not be loaded."
+                          : "No tax clients found for this firm."}
+                  </td>
+                </tr>
+              ) : (
+                taxClients.map((client, index) => (
+                  <tr
+                    key={client.taxPersonClientId ?? index}
+                    className="border-t"
+                  >
+                    <td className="px-4 py-3">
+                      {[client.taxpayerFirstName, client.taxpayerLastName]
+                        .filter(Boolean)
+                        .join(" ") || "Not provided"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {selectedFirmName || selectedFirmId}
+                    </td>
+                    <td className="px-4 py-3">
+                      {client.taxYear ?? "Not provided"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {client.email || "Not provided"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {client.phoneNumber || "Not provided"}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
