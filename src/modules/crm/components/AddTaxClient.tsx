@@ -58,6 +58,7 @@ export const AddTaxClient = () => {
     formState: { errors },
   } = useForm<CreateTaxClientFormData>({
     resolver: zodResolver(createTaxClientSchema),
+    mode: "onChange",
     defaultValues: {
       firmId: "",
       taxYear: new Date().getFullYear().toString(),
@@ -116,6 +117,10 @@ export const AddTaxClient = () => {
         <p className="text-gray-600 text-sm mt-2">
           Link a taxpayer/client to the selected firm
         </p>
+        <p className="text-sm text-gray-600 mt-2">
+          Fields marked <span className="text-red-500">*</span> are required.
+          All other fields are optional.
+        </p>
       </div>
 
       {error && (
@@ -124,15 +129,21 @@ export const AddTaxClient = () => {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="firmSelect">Select Firm *</Label>
+          <Label htmlFor="firmSelect">
+            Select Firm <span className="text-red-500">*</span>
+          </Label>
           <Controller
             name="firmId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger id="firmSelect" className="w-full">
+                <SelectTrigger
+                  id="firmSelect"
+                  className="w-full"
+                  aria-required="true"
+                >
                   <SelectValue placeholder="Select a firm" />
                 </SelectTrigger>
                 <SelectContent>
@@ -172,16 +183,19 @@ export const AddTaxClient = () => {
               <Label htmlFor="taxYear">
                 Tax Year <span className="text-red-500">*</span>
               </Label>
-              <Input {...register("taxYear")} id="taxYear" placeholder="2024" />
+              <Input
+                {...register("taxYear")}
+                id="taxYear"
+                placeholder="2024"
+                aria-required="true"
+              />
               {errors.taxYear && (
                 <p className="text-red-500 text-sm">{errors.taxYear.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="clientStatus">
-                Client Status <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="clientStatus">Client Status</Label>
               <Controller
                 name="clientStatus"
                 control={control}
@@ -225,6 +239,7 @@ export const AddTaxClient = () => {
                 {...register("taxpayerFirstName")}
                 id="taxpayerFirstName"
                 placeholder="John"
+                aria-required="true"
               />
               {errors.taxpayerFirstName && (
                 <p className="text-red-500 text-sm">
@@ -241,6 +256,7 @@ export const AddTaxClient = () => {
                 {...register("taxpayerLastName")}
                 id="taxpayerLastName"
                 placeholder="Doe"
+                aria-required="true"
               />
               {errors.taxpayerLastName && (
                 <p className="text-red-500 text-sm">
@@ -259,6 +275,7 @@ export const AddTaxClient = () => {
                 {...register("taxpayerSSN")}
                 id="taxpayerSSN"
                 placeholder="123-45-6789"
+                aria-required="true"
               />
               {errors.taxpayerSSN && (
                 <p className="text-red-500 text-sm">
@@ -298,9 +315,7 @@ export const AddTaxClient = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="filingStatus">
-                Filing Status <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="filingStatus">Filing Status</Label>
               <Controller
                 name="filingStatus"
                 control={control}
@@ -353,13 +368,12 @@ export const AddTaxClient = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">
-                Phone Number <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="phoneNumber">Phone Number</Label>
               <Input
                 {...register("phoneNumber")}
                 id="phoneNumber"
-                placeholder="(555) 123-4567"
+                type="tel"
+                placeholder="+15551234567"
               />
               {errors.phoneNumber && (
                 <p className="text-red-500 text-sm">
@@ -369,9 +383,7 @@ export const AddTaxClient = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 {...register("email")}
                 id="email"
@@ -387,7 +399,7 @@ export const AddTaxClient = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="preferredContactMethod">
-                Preferred Contact Method <span className="text-red-500">*</span>
+                Preferred Contact Method
               </Label>
               <Controller
                 name="preferredContactMethod"

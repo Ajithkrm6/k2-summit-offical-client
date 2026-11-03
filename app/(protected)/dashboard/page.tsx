@@ -27,6 +27,7 @@ import type {
 import { useDeleteTaxFirm } from "@/lib/api/hooks/k2-tax-api/useDeleteTaxFirm";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
 import { useUpdateTaxFirm } from "@/lib/api/hooks/k2-tax-api/useUpdateTaxFirm";
+import { phoneNumberSchema } from "@/modules/crm/lib";
 import { useDashboardStore } from "@/modules/dashboard/store/dashboard.store";
 import { Edit, Trash } from "lucide-react";
 import Link from "next/link";
@@ -191,7 +192,12 @@ const editFirmFieldRules = (name: keyof EditTaxFirmFields) => {
   }
 
   if (name === "mainPhoneNumber") {
-    return { pattern: /^[\d\-+()\s]*$/ };
+    return {
+      validate: (value: string) => {
+        const result = phoneNumberSchema.safeParse(value);
+        return result.success || result.error.issues[0].message;
+      },
+    };
   }
 
   if (numericEditFirmFields.has(name)) {

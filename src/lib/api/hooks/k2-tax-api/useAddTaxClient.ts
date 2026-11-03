@@ -25,7 +25,17 @@ export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
   const { mutate, isPending, isSuccess, error } =
     usePostApiV1TaxFirmTaxfirmidTaxPersonClient({
       mutation: {
-        onSuccess: async (_response, variables) => {
+        onSuccess: async (response, variables) => {
+          if (response.data.isError) {
+            toast.add({
+              title: "Failed to add tax client",
+              description:
+                response.data.firstError?.description ||
+                "The client could not be saved",
+              type: "error",
+            });
+            return;
+          }
           await queryClient.invalidateQueries({
             queryKey: getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey(
               variables.taxfirmid,
@@ -68,6 +78,21 @@ export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
         preferredContactMethodTypeId: data.preferredContactMethod
           ? Number(data.preferredContactMethod)
           : null,
+        ...(data.spouseFirstName !== undefined && {
+          spouseFirstName: data.spouseFirstName || null,
+        }),
+        ...(data.spouseLastName !== undefined && {
+          spouseLastName: data.spouseLastName || null,
+        }),
+        ...(data.spouseSsn !== undefined && {
+          spouseSsn: data.spouseSsn || null,
+        }),
+        ...(data.spouseDob !== undefined && {
+          spouseDob: data.spouseDob || null,
+        }),
+        ...(data.spouseOccupation !== undefined && {
+          spouseOccupation: data.spouseOccupation || null,
+        }),
       };
 
       mutate({ taxfirmid: data.firmId, data: request });

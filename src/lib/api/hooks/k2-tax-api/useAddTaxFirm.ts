@@ -29,7 +29,13 @@ export const useAddTaxFirm = () => {
   });
 
   return {
-    addTaxFirm: (data: CreateTaxFirmRequest) => mutate({ data }),
+    addTaxFirm: (data: CreateTaxFirmRequest) =>
+      mutate({
+        data: {
+          ...data,
+          credentialTypeId: data.credentialTypeId ?? null,
+        },
+      }),
     isSuccess: success,
     isPending: isLoading,
   };

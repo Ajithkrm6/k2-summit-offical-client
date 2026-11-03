@@ -119,6 +119,44 @@ describe("useAddTaxClient", () => {
     expect(result.error).toBe(error);
   });
 
+  it("saves optional spouse fields through the client API", () => {
+    useAddTaxClient().addTaxClient({
+      ...form,
+      spouseFirstName: "Alex",
+      spouseLastName: "Doe",
+      spouseSsn: "987-65-4321",
+      spouseDob: "1991-04-03",
+      spouseOccupation: "Teacher",
+    });
+    expect(mutate).toHaveBeenCalledWith({
+      taxfirmid: form.firmId,
+      data: expect.objectContaining({
+        spouseFirstName: "Alex",
+        spouseLastName: "Doe",
+        spouseSsn: "987-65-4321",
+        spouseDob: "1991-04-03",
+        spouseOccupation: "Teacher",
+      }),
+    });
+  });
+
+  it("does not redirect or notify success for an API business error", async () => {
+    const onSuccess = vi.fn();
+    useAddTaxClient({ onSuccess });
+    await useMutation.mock.calls[0][0].mutation.onSuccess(
+      { data: { isError: true, firstError: { description: "Invalid SSN" } } },
+      { taxfirmid: form.firmId },
+    );
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "error",
+        description: "Invalid SSN",
+      }),
+    );
+  });
+
   it("invalidates the created client's firm list before the success callback", async () => {
     const onSuccess = vi.fn();
     useAddTaxClient({ onSuccess });

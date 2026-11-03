@@ -41,6 +41,7 @@ export const AddContact = () => {
     formState: { errors },
   } = useForm<CreateContactFormData>({
     resolver: zodResolver(createContactSchema),
+    mode: "onChange",
     defaultValues: {
       firmId: "",
       firstName: "",
@@ -259,7 +260,8 @@ export const AddContact = () => {
               <Input
                 {...register("phoneNumber")}
                 id="phoneNumber"
-                placeholder="(555) 123-4567"
+                type="tel"
+                placeholder="+15551234567"
                 disabled={!selectedFirmId}
               />
               {errors.phoneNumber && (
@@ -276,7 +278,8 @@ export const AddContact = () => {
               <Input
                 {...register("cellPhone")}
                 id="cellPhone"
-                placeholder="(555) 987-6543"
+                type="tel"
+                placeholder="+15559876543"
                 disabled={!selectedFirmId}
               />
               {errors.cellPhone && (

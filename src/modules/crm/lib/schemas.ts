@@ -1,5 +1,13 @@
 import * as z from "zod";
 
+export const phoneNumberSchema = z
+  .string()
+  .refine(
+    (value) =>
+      value === "" || (value.length === 12 && /^\+1[0-9]{10}$/.test(value)),
+    "Enter +1 followed by exactly 10 digits (e.g. +15551234567)",
+  );
+
 /**
  * CRM Module Schemas
  * Zod validation schemas for CRM forms
@@ -10,25 +18,20 @@ import * as z from "zod";
 // ============================================================================
 
 export const createTaxFirmSchema = z.object({
-  leadStatusTypeId: z.number().int().optional(),
-  firmTypeId: z.number().int().optional(),
+  leadStatusTypeId: z.number({ error: "Lead status is required" }).int(),
+  firmTypeId: z.number({ error: "Firm type is required" }).int(),
   credentialTypeId: z.number().int().nullable().optional(),
   firmName: z
-    .string()
+    .string({ error: "Firm name is required" })
+    .trim()
     .min(1, "Firm name is required")
-    .max(255, "Firm name cannot exceed 255 characters")
-    .nullable()
-    .optional(),
+    .max(255, "Firm name cannot exceed 255 characters"),
   address: z
     .string()
     .max(500, "Address cannot exceed 500 characters")
     .nullable()
     .optional(),
-  mainPhoneNumber: z
-    .string()
-    .regex(/^[\d\-\+\(\)\s]*$/, "Invalid phone number")
-    .nullable()
-    .optional(),
+  mainPhoneNumber: phoneNumberSchema.nullable().optional(),
   websiteUrl: z
     .string()
     .refine((url) => {
@@ -65,7 +68,7 @@ export const createTaxFirmSchema = z.object({
     .min(0, "Employee count cannot be negative")
     .nullable()
     .optional(),
-  servicesOffered: z.boolean().optional(),
+  servicesOffered: z.string().nullable().optional(),
   currentSoftware: z
     .string()
     .max(500, "Current software cannot exceed 500 characters")
@@ -118,16 +121,8 @@ export const createContactSchema = z.object({
     .number({ error: "Please select a role / title" })
     .int()
     .positive("Please select a role / title"),
-  phoneNumber: z
-    .string()
-    .regex(/^[\d\-\+\(\)\s]*$/, "Invalid phone number")
-    .nullable()
-    .optional(),
-  cellPhone: z
-    .string()
-    .regex(/^[\d\-\+\(\)\s]*$/, "Invalid cell phone")
-    .nullable()
-    .optional(),
+  phoneNumber: phoneNumberSchema.nullable().optional(),
+  cellPhone: phoneNumberSchema.nullable().optional(),
   email: z
     .union([z.literal(""), z.string().email("Invalid email address")])
     .nullable()
@@ -159,33 +154,52 @@ export const createTaxClientSchema = z.object({
     .string()
     .min(1, "Tax year is required")
     .regex(/^\d{4}$/, "Tax year must be a four-digit year"),
-  clientStatus: z.string().min(1, "Client status is required"),
+  clientStatus: z.string().optional(),
   taxpayerFirstName: z.string().trim().min(1, "First name is required"),
   taxpayerLastName: z.string().trim().min(1, "Last name is required"),
   taxpayerSSN: z
     .string()
     .min(1, "SSN is required")
     .regex(/^\d{3}-\d{2}-\d{4}$/, "SSN must be in format XXX-XX-XXXX"),
-  taxpayerDOB: z.union([z.literal(""), z.iso.date("Invalid date of birth")]),
-  taxpayerOccupation: z.string(),
-  filingStatus: z.string().min(1, "Filing status is required"),
-  mailingAddress: z.string(),
-  phoneNumber: z.string().regex(/^[\d+()\s-]*$/, "Invalid phone number"),
-  email: z.union([z.literal(""), z.email("Invalid email address")]),
+  taxpayerDOB: z
+    .union([z.literal(""), z.iso.date("Invalid date of birth")])
+    .optional(),
+  taxpayerOccupation: z.string().optional(),
+  spouseFirstName: z.string().optional(),
+  spouseLastName: z.string().optional(),
+  spouseSsn: z
+    .union([
+      z.literal(""),
+      z
+        .string()
+        .regex(/^\d{3}-\d{2}-\d{4}$/, "SSN must be in format XXX-XX-XXXX"),
+    ])
+    .optional(),
+  spouseDob: z
+    .union([z.literal(""), z.iso.date("Invalid date of birth")])
+    .optional(),
+  spouseOccupation: z.string().optional(),
+  filingStatus: z.string().optional(),
+  mailingAddress: z.string().optional(),
+  phoneNumber: phoneNumberSchema.optional(),
+  email: z.union([z.literal(""), z.email("Invalid email address")]).optional(),
   numberOfDependents: z
     .string()
-    .regex(/^\d*$/, "Number of dependents must be a non-negative integer"),
+    .regex(/^\d*$/, "Number of dependents must be a non-negative integer")
+    .optional(),
   priorYearAGI: z
     .string()
     .refine(
       (value) =>
         value === "" || (value.trim() !== "" && Number.isFinite(Number(value))),
       "Prior year AGI must be a number",
-    ),
+    )
+    .optional(),
   preferredContactMethod: z
     .string()
-    .regex(/^$|^[1-9]\d*$/, "Invalid contact method"),
-  notes: z.string(),
+    .regex(/^$|^[1-9]\d*$/, "Invalid contact method")
+    .optional(),
+  notes: z.string().optional(),
 });
 
 // ============================================================================

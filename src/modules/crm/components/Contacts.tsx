@@ -84,7 +84,9 @@ export const Contacts = () => {
           </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="firmSelect">Select Firm *</Label>
+          <Label htmlFor="firmSelect">
+            Select Firm <span className="text-red-500">*</span>
+          </Label>
           <Controller
             name="firmId"
             control={control}

@@ -1,7 +1,6 @@
 "use client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,8 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { CreateTaxFirmRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import { useAddTaxFirm } from "@/lib/api/hooks/k2-tax-api/useAddTaxFirm";
+import { useLookupData } from "@/lib/api/hooks/k2-tax-api/useLookupData";
 import { CreateTaxFirmFormData, createTaxFirmSchema } from "@/modules/crm/lib";
 import { useCRMStore } from "@/modules/crm/store/crm.store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +23,43 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 export const AddFirmCRM = () => {
+  const {
+    firmTypes,
+    credentialsTypes,
+    leadStatusTypes,
+    isLoading: lookupLoading,
+    error: lookupError,
+  } = useLookupData();
+  const firmTypeOptions = firmTypes.flatMap((item) =>
+    item.firmTypeId != null
+      ? [
+          {
+            id: item.firmTypeId,
+            label: item.name || `Firm type ${item.firmTypeId}`,
+          },
+        ]
+      : [],
+  );
+  const credentialOptions = credentialsTypes.flatMap((item) =>
+    item.credentialTypeId != null
+      ? [
+          {
+            id: item.credentialTypeId,
+            label: item.name || `Credential ${item.credentialTypeId}`,
+          },
+        ]
+      : [],
+  );
+  const leadStatusOptions = leadStatusTypes.flatMap((item) =>
+    item.leadStatusTypeId != null
+      ? [
+          {
+            id: item.leadStatusTypeId,
+            label: item.name || `Lead status ${item.leadStatusTypeId}`,
+          },
+        ]
+      : [],
+  );
   const { addTaxFirm, isPending, isSuccess } = useAddTaxFirm();
   const { error, setSuccess } = useCRMStore();
   const {
@@ -57,15 +95,24 @@ export const AddFirmCRM = () => {
   ];
   return (
     <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
-      <h1>Enter a new Tax Firm</h1>
+      <h1 id="contacts-heading" className="text-2xl font-bold">
+        Enter a new Tax Firm
+      </h1>
       <p>
         Capture the code firm record, Allowing it to be linked to Contacts,
-        Activites and Tax clients.
+        Activities and Tax clients.
       </p>
 
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {lookupError && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Failed to load firm options: {lookupError.message}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -74,29 +121,34 @@ export const AddFirmCRM = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
             <div className="space-y-2">
-              <Label htmlFor="firmName">Firm Name</Label>
+              <Label htmlFor="firmName">
+                Firm Name<span className="text-red-500">*</span>
+              </Label>
               <Input {...register("firmName")} id="firmName" />
               {errors.firmName && (
                 <p className="text-red-500">{errors.firmName.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="firmTypeId">Firm Type</Label>
+              <Label htmlFor="firmTypeId">
+                Firm Type<span className="text-red-500">*</span>
+              </Label>
               <Controller
                 name="firmTypeId"
                 control={control}
                 render={({ field }) => {
-                  const selectedItem = items.find(
+                  const selectedItem = firmTypeOptions.find(
                     (item) => item.id === field.value,
                   );
                   return (
                     <Select
+                      disabled={lookupLoading || Boolean(lookupError)}
                       onValueChange={(value) =>
                         field.onChange(value ? Number(value) : undefined)
                       }
                       value={field.value?.toString() || ""}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger id="firmTypeId" className="w-full">
                         <SelectValue placeholder="Select a firm type">
                           {selectedItem?.label}
                         </SelectValue>
@@ -104,14 +156,24 @@ export const AddFirmCRM = () => {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Firm Types</SelectLabel>
-                          {items.map((item) => (
-                            <SelectItem
-                              key={item.id || item.value}
-                              value={(item.id || "").toString()}
-                            >
-                              {item.label}
+                          {lookupLoading ? (
+                            <SelectItem value="loading" disabled>
+                              Loading firm types...
                             </SelectItem>
-                          ))}
+                          ) : firmTypeOptions.length === 0 ? (
+                            <SelectItem value="empty" disabled>
+                              No firm types available
+                            </SelectItem>
+                          ) : (
+                            firmTypeOptions.map((item) => (
+                              <SelectItem
+                                key={item.id}
+                                value={item.id.toString()}
+                              >
+                                {item.label}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -131,17 +193,18 @@ export const AddFirmCRM = () => {
                 name="credentialTypeId"
                 control={control}
                 render={({ field }) => {
-                  const selectedItem = items.find(
+                  const selectedItem = credentialOptions.find(
                     (item) => item.id === field.value,
                   );
                   return (
                     <Select
+                      disabled={lookupLoading || Boolean(lookupError)}
                       onValueChange={(value) =>
                         field.onChange(value ? Number(value) : undefined)
                       }
                       value={field.value?.toString() || ""}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger id="credentialTypeId" className="w-full">
                         <SelectValue placeholder="Select credentials">
                           {selectedItem?.label}
                         </SelectValue>
@@ -149,14 +212,24 @@ export const AddFirmCRM = () => {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Credentials</SelectLabel>
-                          {items.map((item) => (
-                            <SelectItem
-                              key={item.id || item.value}
-                              value={(item.id || "").toString()}
-                            >
-                              {item.label}
+                          {lookupLoading ? (
+                            <SelectItem value="loading" disabled>
+                              Loading credentials...
                             </SelectItem>
-                          ))}
+                          ) : credentialOptions.length === 0 ? (
+                            <SelectItem value="empty" disabled>
+                              No credentials available
+                            </SelectItem>
+                          ) : (
+                            credentialOptions.map((item) => (
+                              <SelectItem
+                                key={item.id}
+                                value={item.id.toString()}
+                              >
+                                {item.label}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -170,22 +243,25 @@ export const AddFirmCRM = () => {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="leadStatusTypeId">Load Status</Label>
+              <Label htmlFor="leadStatusTypeId">
+                Lead Status<span className="text-red-500">*</span>
+              </Label>
               <Controller
                 name="leadStatusTypeId"
                 control={control}
                 render={({ field }) => {
-                  const selectedItem = items.find(
+                  const selectedItem = leadStatusOptions.find(
                     (item) => item.id === field.value,
                   );
                   return (
                     <Select
+                      disabled={lookupLoading || Boolean(lookupError)}
                       onValueChange={(value) =>
                         field.onChange(value ? Number(value) : undefined)
                       }
                       value={field.value?.toString() || ""}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger id="leadStatusTypeId" className="w-full">
                         <SelectValue placeholder="Select status">
                           {selectedItem?.label}
                         </SelectValue>
@@ -193,14 +269,24 @@ export const AddFirmCRM = () => {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Status</SelectLabel>
-                          {items.map((item) => (
-                            <SelectItem
-                              key={item.id || item.value}
-                              value={(item.id || "").toString()}
-                            >
-                              {item.label}
+                          {lookupLoading ? (
+                            <SelectItem value="loading" disabled>
+                              Loading lead statuses...
                             </SelectItem>
-                          ))}
+                          ) : leadStatusOptions.length === 0 ? (
+                            <SelectItem value="empty" disabled>
+                              No lead statuses available
+                            </SelectItem>
+                          ) : (
+                            leadStatusOptions.map((item) => (
+                              <SelectItem
+                                key={item.id}
+                                value={item.id.toString()}
+                              >
+                                {item.label}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -232,8 +318,15 @@ export const AddFirmCRM = () => {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="mainPhoneNumber">Main Phone number</Label>
-              <Input {...register("mainPhoneNumber")} id="mainPhoneNumber" />
+              <Label htmlFor="mainPhoneNumber">
+                Main Phone number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                {...register("mainPhoneNumber")}
+                id="mainPhoneNumber"
+                type="tel"
+                placeholder="+15551234567"
+              />
               {errors.mainPhoneNumber && (
                 <p className="text-red-500">{errors.mainPhoneNumber.message}</p>
               )}
@@ -304,21 +397,12 @@ export const AddFirmCRM = () => {
               )}
             </div>
           </div>
-          <div>
-            <span>Services Offered</span>
-            <div>
-              <Controller
-                name="servicesOffered"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    id="servicesOffered"
-                    checked={!!field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                )}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="servicesOffered">Services Offered</Label>
+            <Input {...register("servicesOffered")} id="servicesOffered" />
+            {errors.servicesOffered && (
+              <p className="text-red-500">{errors.servicesOffered.message}</p>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -377,8 +461,6 @@ export const AddFirmCRM = () => {
                 </p>
               )}
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="competitorInUse">Competitor in use</Label>
               <Input {...register("competitorInUse")} id="competitorInUse" />
@@ -387,9 +469,10 @@ export const AddFirmCRM = () => {
               )}
             </div>
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
-            <Input {...register("notes")} id="notes" />
+            <Textarea {...register("notes")} id="notes" />
             {errors.notes && (
               <p className="text-red-500">{errors.notes.message}</p>
             )}
