@@ -7,7 +7,132 @@ import {
   phoneNumberSchema,
   updateTaxFirmSchema,
   type CreateTaxClientFormData,
+  editTaxClientSchema,
+  editContactSchema,
 } from "./schemas";
+
+describe.each([
+  ["contact first name", createContactSchema.shape.firstName],
+  ["contact last name", createContactSchema.shape.lastName],
+  ["edited contact first name", editContactSchema.shape.firstName],
+  ["edited contact last name", editContactSchema.shape.lastName],
+  ["taxpayer first name", createTaxClientSchema.shape.taxpayerFirstName],
+  ["taxpayer last name", createTaxClientSchema.shape.taxpayerLastName],
+  ["edited taxpayer first name", editTaxClientSchema.shape.taxpayerFirstName],
+  ["edited taxpayer last name", editTaxClientSchema.shape.taxpayerLastName],
+  ["spouse first name", createTaxClientSchema.shape.spouseFirstName],
+  ["spouse last name", createTaxClientSchema.shape.spouseLastName],
+] as const)("%s character validation", (_label, schema) => {
+  it.each(["John", "mary", "MARY", "Mary Jane", " van der Berg "])(
+    "accepts letters and spaces: %s",
+    (value) => {
+      expect(schema.safeParse(value).success).toBe(true);
+    },
+  );
+
+  it.each([
+    "John1",
+    "123",
+    "Anne-Marie",
+    "O'Neil",
+    "Jane@",
+    "Jöhn",
+    "Mary\tJane",
+    "Mary\nJane",
+  ])("rejects non-letter characters: %s", (value) => {
+    const result = schema.safeParse(value);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain(
+        "only letters and spaces",
+      );
+    }
+  });
+});
+
+it("keeps spouse names optional and permits them to be cleared", () => {
+  for (const schema of [
+    createTaxClientSchema.shape.spouseFirstName,
+    createTaxClientSchema.shape.spouseLastName,
+  ]) {
+    expect(schema.safeParse(undefined).success).toBe(true);
+    expect(schema.safeParse("").success).toBe(true);
+  }
+});
+
+it("restricts firm names to letters and spaces", () => {
+  expect(
+    createTaxFirmSchema.shape.firmName.safeParse("Tax & Accounting 123, LLC")
+      .success,
+  ).toBe(false);
+  expect(
+    createTaxFirmSchema.shape.firmName.safeParse("Example Tax Firm").success,
+  ).toBe(true);
+});
+
+describe("editContactSchema", () => {
+  it("validates contact edits without a new firm selection", () => {
+    expect(
+      editContactSchema.safeParse({
+        firstName: "Jane",
+        lastName: "Doe",
+        roleTitleTypeId: 2,
+        preferredContactMethodTypeId: 3,
+        phoneNumber: "+15551234567",
+        cellPhone: "",
+        email: "",
+        isPrimaryContact: false,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("reports all required contact edit fields", () => {
+    const result = editContactSchema.safeParse({ firstName: "", lastName: "" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors).toEqual({
+        firstName: ["First name is required"],
+        lastName: ["Last name is required"],
+        roleTitleTypeId: ["Please select a role / title"],
+        preferredContactMethodTypeId: [
+          "Please select a preferred contact method",
+        ],
+      });
+    }
+  });
+});
+
+describe("editTaxClientSchema", () => {
+  it("validates an edit without requiring a new firm selection", () => {
+    expect(
+      editTaxClientSchema.safeParse({
+        taxpayerFirstName: "Jane",
+        taxpayerLastName: "Doe",
+        taxYear: "2026",
+        taxpayerSSN: "123-45-6789",
+        phoneNumber: "+15551234567",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("reports required fields for a blank edit", () => {
+    const result = editTaxClientSchema.safeParse({
+      taxpayerFirstName: "",
+      taxpayerLastName: "",
+      taxYear: "",
+      taxpayerSSN: "",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(Object.keys(result.error.flatten().fieldErrors).sort()).toEqual([
+        "taxYear",
+        "taxpayerFirstName",
+        "taxpayerLastName",
+        "taxpayerSSN",
+      ]);
+    }
+  });
+});
 
 describe("createTaxFirmSchema", () => {
   const requiredFields = {
@@ -279,5 +404,110 @@ describe("createTaxClientSchema", () => {
         true,
       );
     }
+  });
+});
+
+describe("DOB validation", () => {
+  const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const oneMonthAgo = new Date(Date.now() - 2592000000)
+    .toISOString()
+    .split("T")[0];
+
+  describe("taxpayerDOB", () => {
+    const schema = createTaxClientSchema.shape.taxpayerDOB;
+
+    it("accepts empty/undefined DOB", () => {
+      expect(schema.safeParse("").success).toBe(true);
+      expect(schema.safeParse(undefined).success).toBe(true);
+    });
+
+    it("accepts past dates", () => {
+      expect(schema.safeParse(yesterday).success).toBe(true);
+      expect(schema.safeParse(oneMonthAgo).success).toBe(true);
+      expect(schema.safeParse("1990-05-10").success).toBe(true);
+    });
+
+    it("accepts today's date", () => {
+      expect(schema.safeParse(today).success).toBe(true);
+    });
+
+    it("rejects future dates", () => {
+      const result = schema.safeParse(tomorrow);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain(
+          "cannot be in the future",
+        );
+      }
+    });
+
+    it("rejects invalid date formats", () => {
+      expect(schema.safeParse("2026-02-30").success).toBe(false);
+    });
+  });
+
+  describe("spouseDob", () => {
+    const schema = createTaxClientSchema.shape.spouseDob;
+
+    it("accepts empty/undefined spouse DOB", () => {
+      expect(schema.safeParse("").success).toBe(true);
+      expect(schema.safeParse(undefined).success).toBe(true);
+    });
+
+    it("accepts past dates", () => {
+      expect(schema.safeParse(yesterday).success).toBe(true);
+      expect(schema.safeParse("1985-03-20").success).toBe(true);
+    });
+
+    it("accepts today's date", () => {
+      expect(schema.safeParse(today).success).toBe(true);
+    });
+
+    it("rejects future dates", () => {
+      const result = schema.safeParse(tomorrow);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain(
+          "cannot be in the future",
+        );
+      }
+    });
+  });
+
+  describe("editTaxClientSchema DOB fields", () => {
+    it("rejects taxpayerDOB as future date in edit", () => {
+      const tomorrow = new Date(Date.now() + 86400000)
+        .toISOString()
+        .split("T")[0];
+      const result = editTaxClientSchema.safeParse({
+        taxpayerFirstName: "Jane",
+        taxpayerLastName: "Doe",
+        taxYear: "2026",
+        taxpayerSSN: "123-45-6789",
+        taxpayerDOB: tomorrow,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some((issue) =>
+            issue.message.includes("cannot be in the future"),
+          ),
+        ).toBe(true);
+      }
+    });
+
+    it("accepts taxpayerDOB as past date in edit", () => {
+      expect(
+        editTaxClientSchema.safeParse({
+          taxpayerFirstName: "Jane",
+          taxpayerLastName: "Doe",
+          taxYear: "2026",
+          taxpayerSSN: "123-45-6789",
+          taxpayerDOB: "1990-05-10",
+        }).success,
+      ).toBe(true);
+    });
   });
 });

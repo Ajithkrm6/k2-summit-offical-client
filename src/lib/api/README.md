@@ -38,11 +38,68 @@ src/lib/api/
 
 ## Workflow
 
+### API error messages
+
+The shared [`getApiErrorMessage`](./error-message.ts) helper prioritizes the
+backend Problem Details `title`, followed by a response `message` or legacy
+`error.message`, then the request error message and a fallback.
+Both Axios response interceptors normalize rejected Axios errors with this
+message while preserving their identity, status, response body, and code.
+The global Axios configuration is loaded by the application providers, so
+generated queries and mutations use the backend title in existing
+`error.message` alerts and toasts, including dashboard actions and CRM lists.
+Creation, authentication, and upload hooks also use the shared helper directly.
+HTTP-success business errors retain their existing `firstError.description`
+handling. No generated files or request-state ownership are changed.
+
+### Contact row actions
+
+Contact creation exposes `errorMessage` from `useAddContact` for the form alert
+and error toast. It prioritizes the backend Problem Details `title`, then a
+response `message` or legacy `error.message`, and finally the request error
+message when none is available.
+
+`Contacts` uses `useUpdateContact` and `useDeleteContact`, wrapping the generated
+`usePatchApiV1TaxFirmTaxFirmIdContactContactId` and
+`useDeleteApiV1TaxFirmTaxFirmIdContactContactId` hooks. Edits are prefilled from
+the firm contact list and validated with Zod, with lookup-backed role/title and
+preferred contact method selections. `bestTimeToReach` is not returned by the
+list endpoint and is omitted from edits to preserve it. Delete requires
+confirmation. Successful actions refresh contacts for the original firm and
+dashboard counts; failures keep the dialog open and show notifications.
+Mutation state stays in TanStack Query without an additional store.
+
+### Tax Client row actions
+
+`TaxClients` uses `useUpdateTaxClient` and `useDeleteTaxClient`, wrapping the
+generated `usePatchApiV1TaxFirmTaxFirmIdClientClientId` and
+`useDeleteApiV1TaxFirmTaxFirmIdClientClientId` hooks. Edit dialogs are prefilled
+from the firm client list and validate names, tax year, SSN, DOB, phone, and
+email with Zod. Only fields available in that response are edited; occupation
+and spouse fields are left unchanged. Delete requires confirmation. Both
+actions refresh the original firm's client list and dashboard firm counts,
+show failure/success notifications, and keep mutation state in TanStack Query.
+
 The Tax Firm form (`AddFirmCRM`) uses the existing `useLookupData` wrapper of
 `useGetApiV1Lookup` for Firm Type, Credentials, and Lead Status. Option labels
 come from `name`; selected values are submitted as numeric `firmTypeId`,
 `credentialTypeId`, and `leadStatusTypeId`. Lookup loading and failures are
 displayed in the form. Lead Source is not part of these lookup categories.
+
+After successful firm creation, `useAddTaxFirm` invalidates the generated
+`getGetApiV1UserTaxFirmsQueryKey()` before reporting success. Active firm lists
+refetch immediately; inactive lists become stale and refetch when the dashboard
+or a firm selector mounts again, without waiting for the five-minute stale time.
+Business errors show their description without reporting success or clearing
+the form. Existing cache settings and store ownership remain unchanged.
+
+The dashboard firm editor uses the same 18 fields, labels, and field order as
+`AddFirmCRM`. Firm Type, Credentials, and Lead Status use lookup dropdowns;
+Lead Source retains the add form's existing choices. Required fields show
+asterisks, and optional Credentials and Lead Source can be cleared.
+Optional text and numeric blanks are submitted as explicit `null` values.
+Successful updates await firm-list invalidation before closing the editor,
+so reopening uses the refreshed server values. The firm API has no email field.
 
 ### 1. Generate API Types from Swagger
 

@@ -19,6 +19,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   GetTaxFirmResponse,
@@ -26,13 +34,14 @@ import type {
 } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import { useDeleteTaxFirm } from "@/lib/api/hooks/k2-tax-api/useDeleteTaxFirm";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
+import { useLookupData } from "@/lib/api/hooks/k2-tax-api/useLookupData";
 import { useUpdateTaxFirm } from "@/lib/api/hooks/k2-tax-api/useUpdateTaxFirm";
 import { phoneNumberSchema } from "@/modules/crm/lib";
 import { useDashboardStore } from "@/modules/dashboard/store/dashboard.store";
 import { Edit, Trash } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 interface EditTaxFirmFields {
   firmName: string;
@@ -61,43 +70,41 @@ const numberToFormValue = (value: number | null | undefined) =>
 const formValueToNumber = (value: string) =>
   value.trim() === "" ? null : Number(value);
 
-const formValueToText = (value: string) => value.trim() || null;
-
 const editFirmFields: {
   name: keyof EditTaxFirmFields;
   label: string;
   type?: string;
   maxLength?: number;
 }[] = [
-  { name: "leadStatusTypeId", label: "Lead status type ID", type: "number" },
-  { name: "firmTypeId", label: "Firm type ID", type: "number" },
-  { name: "credentialTypeId", label: "Credential type ID", type: "number" },
-  { name: "firmName", label: "Firm name", maxLength: 255 },
+  { name: "firmName", label: "Firm Name", maxLength: 255 },
+  { name: "firmTypeId", label: "Firm Type" },
+  { name: "credentialTypeId", label: "Credentials" },
+  { name: "leadStatusTypeId", label: "Lead Status" },
   { name: "address", label: "Address", maxLength: 500 },
-  { name: "mainPhoneNumber", label: "Main phone number", type: "tel" },
-  { name: "websiteUrl", label: "Website URL" },
-  { name: "numberOfOffices", label: "Number of offices", type: "number" },
+  { name: "websiteUrl", label: "Url" },
+  { name: "mainPhoneNumber", label: "Main Phone number", type: "tel" },
+  { name: "numberOfOffices", label: "No of Offices", type: "number" },
   {
     name: "numberOfTaxClients",
-    label: "Number of tax clients",
+    label: "No of Tax Clients",
     type: "number",
   },
   {
     name: "estimatedAnnualRevenue",
-    label: "Estimated annual revenue",
+    label: "Estimated Annual Revenue",
     type: "number",
   },
-  { name: "employeeCount", label: "Employee count", type: "number" },
-  { name: "servicesOffered", label: "Services offered" },
-  { name: "currentSoftware", label: "Current software", maxLength: 500 },
-  { name: "competitorInUse", label: "Competitor in use", maxLength: 500 },
-  { name: "leadSource", label: "Lead source", maxLength: 500 },
-  { name: "referralSource", label: "Referral source", maxLength: 500 },
+  { name: "employeeCount", label: "Employee Count", type: "number" },
+  { name: "currentSoftware", label: "Current Software", maxLength: 500 },
+  { name: "servicesOffered", label: "Services Offered" },
+  { name: "leadSource", label: "Lead Source", maxLength: 500 },
+  { name: "referralSource", label: "Referral Source", maxLength: 500 },
   {
     name: "potentialDealSize",
     label: "Potential deal size",
     type: "number",
   },
+  { name: "competitorInUse", label: "Competitor in use", maxLength: 500 },
   { name: "notes", label: "Notes", maxLength: 1000 },
 ];
 
@@ -142,28 +149,26 @@ const getEditFirmDefaults = (firm: GetTaxFirmResponse): EditTaxFirmFields => ({
   notes: firm.notes ?? "",
 });
 
+// PATCH semantics: only changed fields are sent. Cleared text is sent as ""
+// (the backend treats null as "leave unchanged"); cleared numbers are sent as null.
 const toUpdateTaxFirmRequest = (
   values: EditTaxFirmFields,
-): UpdateTaxFirmRequest => ({
-  leadStatusTypeId: formValueToNumber(values.leadStatusTypeId),
-  firmTypeId: formValueToNumber(values.firmTypeId),
-  credentialTypeId: formValueToNumber(values.credentialTypeId),
-  firmName: values.firmName.trim(),
-  address: formValueToText(values.address),
-  mainPhoneNumber: formValueToText(values.mainPhoneNumber),
-  websiteUrl: formValueToText(values.websiteUrl),
-  numberOfOffices: formValueToNumber(values.numberOfOffices),
-  numberOfTaxClients: formValueToNumber(values.numberOfTaxClients),
-  estimatedAnnualRevenue: formValueToNumber(values.estimatedAnnualRevenue),
-  employeeCount: formValueToNumber(values.employeeCount),
-  servicesOffered: formValueToText(values.servicesOffered),
-  currentSoftware: formValueToText(values.currentSoftware),
-  competitorInUse: formValueToText(values.competitorInUse),
-  leadSource: formValueToText(values.leadSource),
-  referralSource: formValueToText(values.referralSource),
-  potentialDealSize: formValueToNumber(values.potentialDealSize),
-  notes: formValueToText(values.notes),
-});
+  original: GetTaxFirmResponse,
+): UpdateTaxFirmRequest => {
+  const initial = getEditFirmDefaults(original);
+  const payload: Record<string, string | number | null> = {};
+
+  for (const key of Object.keys(values) as (keyof EditTaxFirmFields)[]) {
+    const value = values[key].trim();
+    if (value === initial[key].trim()) continue;
+
+    payload[key] = numericEditFirmFields.has(key)
+      ? formValueToNumber(value)
+      : value;
+  }
+
+  return payload as UpdateTaxFirmRequest;
+};
 
 const defaultEditFirmValues: EditTaxFirmFields = {
   firmName: "",
@@ -187,8 +192,26 @@ const defaultEditFirmValues: EditTaxFirmFields = {
 };
 
 const editFirmFieldRules = (name: keyof EditTaxFirmFields) => {
+  if (name === "firmTypeId" || name === "leadStatusTypeId") {
+    return {
+      required:
+        name === "firmTypeId"
+          ? "Firm type is required"
+          : "Lead status is required",
+      validate: (value: string) =>
+        (Number.isInteger(Number(value)) && Number(value) > 0) ||
+        "Please select a valid option",
+    };
+  }
   if (name === "firmName") {
-    return { required: "Firm name is required", maxLength: 255 };
+    return {
+      required: "Firm name is required",
+      maxLength: 255,
+      pattern: {
+        value: /^[A-Za-z ]+$/,
+        message: "Firm name must contain only letters and spaces",
+      },
+    };
   }
 
   if (name === "mainPhoneNumber") {
@@ -232,6 +255,52 @@ const editFirmFieldRules = (name: keyof EditTaxFirmFields) => {
 export default function DashboardPage() {
   const { stats } = useDashboardStore();
   const { taxFirms, isLoading } = useGetTaxFirms();
+  const {
+    firmTypes,
+    credentialsTypes,
+    leadStatusTypes,
+    isLoading: lookupLoading,
+    error: lookupError,
+  } = useLookupData();
+  const lookupFields = {
+    leadSource: [
+      { value: "apple", label: "firm type 1" },
+      { value: "banana", label: "firm type 2" },
+      { value: "blueberry", label: "firm type 3" },
+      { value: "grapes", label: "firm type 4" },
+      { value: "pineapple", label: "firm type 5" },
+    ],
+    firmTypeId: firmTypes.flatMap((item) =>
+      item.firmTypeId == null
+        ? []
+        : [
+            {
+              value: String(item.firmTypeId),
+              label: item.name || `Firm type ${item.firmTypeId}`,
+            },
+          ],
+    ),
+    credentialTypeId: credentialsTypes.flatMap((item) =>
+      item.credentialTypeId == null
+        ? []
+        : [
+            {
+              value: String(item.credentialTypeId),
+              label: item.name || `Credential ${item.credentialTypeId}`,
+            },
+          ],
+    ),
+    leadStatusTypeId: leadStatusTypes.flatMap((item) =>
+      item.leadStatusTypeId == null
+        ? []
+        : [
+            {
+              value: String(item.leadStatusTypeId),
+              label: item.name || `Lead status ${item.leadStatusTypeId}`,
+            },
+          ],
+    ),
+  };
   const [editingFirm, setEditingFirm] = useState<GetTaxFirmResponse | null>(
     null,
   );
@@ -246,6 +315,7 @@ export default function DashboardPage() {
   });
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { isDirty, errors },
@@ -269,7 +339,10 @@ export default function DashboardPage() {
       return;
     }
 
-    updateTaxFirm(editingFirm.taxFirmId, toUpdateTaxFirmRequest(values));
+    updateTaxFirm(
+      editingFirm.taxFirmId,
+      toUpdateTaxFirmRequest(values, editingFirm),
+    );
   };
 
   const confirmFirmDelete = () => {
@@ -449,7 +522,10 @@ export default function DashboardPage() {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent
+          className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
+          showCloseButton={!isUpdating}
+        >
           <DialogHeader>
             <DialogTitle>Edit tax firm</DialogTitle>
             <DialogDescription>
@@ -457,52 +533,139 @@ export default function DashboardPage() {
               valid change.
             </DialogDescription>
           </DialogHeader>
+          {lookupError && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Failed to load firm options: {lookupError.message}
+              </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit(submitFirmUpdate)} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {editFirmFields.map(({ name, label, type, maxLength }) => {
-                const fieldError = errors[name]?.message;
-                const fieldId = `editFirm-${name}`;
+            <fieldset disabled={isUpdating} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {editFirmFields.map(({ name, label, type, maxLength }) => {
+                  const fieldError = errors[name]?.message;
+                  const fieldId = `editFirm-${name}`;
 
-                return (
-                  <div
-                    key={name}
-                    className={`space-y-2 ${name === "notes" ? "sm:col-span-2" : ""}`}
-                  >
-                    <Label htmlFor={fieldId}>{label}</Label>
-                    {name === "notes" ? (
-                      <Textarea
-                        id={fieldId}
-                        aria-invalid={Boolean(fieldError)}
-                        {...register(name, editFirmFieldRules(name))}
-                        maxLength={maxLength}
-                      />
-                    ) : (
-                      <Input
-                        id={fieldId}
-                        type={type ?? "text"}
-                        aria-invalid={Boolean(fieldError)}
-                        min={numericEditFirmFields.has(name) ? 0 : undefined}
-                        step={
-                          integerEditFirmFields.has(name)
-                            ? 1
-                            : name === "estimatedAnnualRevenue" ||
-                                name === "potentialDealSize"
-                              ? "any"
-                              : undefined
-                        }
-                        {...register(name, editFirmFieldRules(name))}
-                        maxLength={maxLength}
-                      />
-                    )}
-                    {fieldError && (
-                      <p className="text-sm text-destructive" role="alert">
-                        {fieldError}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  return (
+                    <div
+                      key={name}
+                      className={`space-y-2 ${name === "notes" ? "sm:col-span-2" : ""}`}
+                    >
+                      <Label htmlFor={fieldId}>
+                        {label}
+                        {(name === "firmName" ||
+                          name === "firmTypeId" ||
+                          name === "leadStatusTypeId") && (
+                          <span className="text-red-500"> *</span>
+                        )}
+                      </Label>
+                      {name === "firmTypeId" ||
+                      name === "credentialTypeId" ||
+                      name === "leadStatusTypeId" ||
+                      name === "leadSource" ? (
+                        <Controller
+                          name={name}
+                          control={control}
+                          rules={editFirmFieldRules(name)}
+                          render={({ field }) => {
+                            const options = lookupFields[name];
+                            const selectedOption = options.find(
+                              (option) => option.value === field.value,
+                            );
+                            return (
+                              <Select
+                                value={field.value || null}
+                                onValueChange={(value) =>
+                                  field.onChange(value ?? "")
+                                }
+                                disabled={
+                                  isUpdating ||
+                                  (name !== "leadSource" &&
+                                    (lookupLoading || Boolean(lookupError)))
+                                }
+                              >
+                                <SelectTrigger
+                                  id={fieldId}
+                                  className="w-full"
+                                  ref={field.ref}
+                                  onBlur={field.onBlur}
+                                  aria-invalid={Boolean(fieldError)}
+                                >
+                                  <SelectValue
+                                    placeholder={`Select ${label.toLowerCase()}`}
+                                  >
+                                    {selectedOption?.label}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(name === "credentialTypeId" ||
+                                    name === "leadSource") && (
+                                    <SelectItem value={null}>
+                                      {name === "credentialTypeId"
+                                        ? "No credentials"
+                                        : "No lead source"}
+                                    </SelectItem>
+                                  )}
+                                  {lookupLoading && name !== "leadSource" ? (
+                                    <SelectItem value="loading" disabled>
+                                      Loading options...
+                                    </SelectItem>
+                                  ) : options.length === 0 ? (
+                                    <SelectItem value="empty" disabled>
+                                      No options available
+                                    </SelectItem>
+                                  ) : (
+                                    options.map((option) => (
+                                      <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                      >
+                                        {option.label}
+                                      </SelectItem>
+                                    ))
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            );
+                          }}
+                        />
+                      ) : name === "notes" ? (
+                        <Textarea
+                          id={fieldId}
+                          aria-invalid={Boolean(fieldError)}
+                          {...register(name, editFirmFieldRules(name))}
+                          maxLength={maxLength}
+                        />
+                      ) : (
+                        <Input
+                          lettersOnly={name === "firmName"}
+                          id={fieldId}
+                          type={type ?? "text"}
+                          aria-invalid={Boolean(fieldError)}
+                          min={numericEditFirmFields.has(name) ? 0 : undefined}
+                          step={
+                            integerEditFirmFields.has(name)
+                              ? 1
+                              : name === "estimatedAnnualRevenue" ||
+                                  name === "potentialDealSize"
+                                ? "any"
+                                : undefined
+                          }
+                          {...register(name, editFirmFieldRules(name))}
+                          maxLength={maxLength}
+                        />
+                      )}
+                      {fieldError && (
+                        <p className="text-sm text-destructive" role="alert">
+                          {fieldError}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
             <DialogFooter>
               <Button
                 type="button"

@@ -23,8 +23,8 @@ vi.mock("react-hook-form", async (importOriginal) => ({
 
 vi.mock("@/components/ui/button", () => ({
   buttonVariants: () => "button",
-  Button: ({ children }: { children: React.ReactNode }) =>
-    createElement("button", null, children),
+  Button: ({ children, ...props }: React.ComponentProps<"button">) =>
+    createElement("button", props, children),
 }));
 
 vi.mock("@/components/ui/alert", () => ({
@@ -54,6 +54,36 @@ vi.mock("@/components/ui/select", () => {
 });
 
 import { TaxClients } from "./TaxClients";
+
+vi.mock("@/modules/crm/lib", async () => import("../lib"));
+vi.mock(
+  "@/components/ui/input",
+  async () => import("../../../components/ui/input"),
+);
+vi.mock("@/lib/api/hooks/k2-tax-api/useUpdateTaxClient", () => ({
+  useUpdateTaxClient: () => ({ updateTaxClient: vi.fn(), isPending: false }),
+}));
+vi.mock("@/lib/api/hooks/k2-tax-api/useDeleteTaxClient", () => ({
+  useDeleteTaxClient: () => ({ deleteTaxClient: vi.fn(), isPending: false }),
+}));
+vi.mock("@/components/ui/dialog", () => {
+  const Container = ({ children }: { children: React.ReactNode }) =>
+    createElement("div", null, children);
+  return {
+    Dialog: ({
+      open,
+      children,
+    }: {
+      open: boolean;
+      children: React.ReactNode;
+    }) => (open ? createElement("div", null, children) : null),
+    DialogContent: Container,
+    DialogDescription: Container,
+    DialogFooter: Container,
+    DialogHeader: Container,
+    DialogTitle: Container,
+  };
+});
 
 describe("TaxClients", () => {
   beforeEach(() => {
@@ -173,5 +203,7 @@ describe("TaxClients", () => {
     }
     expect(markup).not.toContain("123-45-6789");
     expect(markup).not.toContain("1990-01-01");
+    expect(markup).toContain('aria-label="Edit Jane Doe"');
+    expect(markup).toContain('aria-label="Delete Jane Doe"');
   });
 });

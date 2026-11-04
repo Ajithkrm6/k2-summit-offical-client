@@ -2,6 +2,15 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -12,13 +21,75 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { GetTaxPersonClientByTaxFirmIdResponse } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { useDeleteTaxClient } from "@/lib/api/hooks/k2-tax-api/useDeleteTaxClient";
 import { useGetTaxClients } from "@/lib/api/hooks/k2-tax-api/useGetTaxClients";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
+import { useUpdateTaxClient } from "@/lib/api/hooks/k2-tax-api/useUpdateTaxClient";
+import {
+  editTaxClientSchema,
+  type EditTaxClientFormData,
+} from "@/modules/crm/lib";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Edit, Trash } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
+const editFields: {
+  name: keyof EditTaxClientFormData;
+  label: string;
+  required?: boolean;
+  type?: "text" | "date" | "tel" | "email";
+}[] = [
+  { name: "taxpayerFirstName", label: "First name", required: true },
+  { name: "taxpayerLastName", label: "Last name", required: true },
+  { name: "taxYear", label: "Tax year", required: true },
+  { name: "taxpayerSSN", label: "SSN", required: true },
+  { name: "taxpayerDOB", label: "Date of birth", type: "date" },
+  { name: "mailingAddress", label: "Address" },
+  { name: "phoneNumber", label: "Phone", type: "tel" },
+  { name: "email", label: "Email", type: "email" },
+];
+
+interface SelectedClient {
+  firmId: string;
+  clientId: string;
+  name: string;
+}
+
 export const TaxClients = () => {
+  const [editingClient, setEditingClient] = useState<SelectedClient | null>(
+    null,
+  );
+  const [deletingClient, setDeletingClient] = useState<SelectedClient | null>(
+    null,
+  );
+  const { updateTaxClient, isPending: isUpdating } = useUpdateTaxClient({
+    onSuccess: () => setEditingClient(null),
+  });
+  const { deleteTaxClient, isPending: isDeleting } = useDeleteTaxClient({
+    onSuccess: () => setDeletingClient(null),
+  });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors: editErrors, isDirty },
+  } = useForm<EditTaxClientFormData>({
+    resolver: zodResolver(editTaxClientSchema),
+    mode: "onChange",
+    defaultValues: {
+      taxpayerFirstName: "",
+      taxpayerLastName: "",
+      taxYear: "",
+      taxpayerSSN: "",
+      taxpayerDOB: "",
+      mailingAddress: "",
+      phoneNumber: "",
+      email: "",
+    },
+  });
   const { taxFirms, isLoading, error: firmsError } = useGetTaxFirms();
   const { control, setValue } = useForm<{ firmId: string }>({
     defaultValues: { firmId: "" },
@@ -49,6 +120,45 @@ export const TaxClients = () => {
   const selectedFirmName = firmOptions.find(
     (firm) => firm.id === selectedFirmId,
   )?.name;
+
+  const selectClient = (
+    client: GetTaxPersonClientByTaxFirmIdResponse,
+  ): SelectedClient => ({
+    firmId: selectedFirmId,
+    clientId: client.taxPersonClientId || "",
+    name:
+      [client.taxpayerFirstName, client.taxpayerLastName]
+        .filter(Boolean)
+        .join(" ") || "this tax client",
+  });
+
+  const openEditDialog = (client: GetTaxPersonClientByTaxFirmIdResponse) => {
+    reset({
+      taxpayerFirstName: client.taxpayerFirstName ?? "",
+      taxpayerLastName: client.taxpayerLastName ?? "",
+      taxYear: client.taxYear == null ? "" : String(client.taxYear),
+      taxpayerSSN: client.taxpayerSsn ?? "",
+      taxpayerDOB: client.taxpayerDob ?? "",
+      mailingAddress: client.address ?? "",
+      phoneNumber: client.phoneNumber ?? "",
+      email: client.email ?? "",
+    });
+    setEditingClient(selectClient(client));
+  };
+
+  const submitUpdate = (data: EditTaxClientFormData) => {
+    if (!editingClient || !isDirty || isUpdating) return;
+    updateTaxClient(editingClient.firmId, editingClient.clientId, {
+      taxpayerFirstName: data.taxpayerFirstName,
+      taxpayerLastName: data.taxpayerLastName,
+      taxYear: Number(data.taxYear),
+      taxpayerSsn: data.taxpayerSSN,
+      taxpayerDob: data.taxpayerDOB || null,
+      address: data.mailingAddress || null,
+      phoneNumber: data.phoneNumber || null,
+      email: data.email || null,
+    });
+  };
 
   return (
     <div className="container min-h-screen space-y-6 rounded-lg bg-white p-4">
@@ -153,12 +263,12 @@ export const TaxClients = () => {
             <caption className="sr-only">Saved tax clients</caption>
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                {["Name", "Firm", "Tax Year", "Email", "Phone"].map(
+                {["Name", "Firm", "Tax Year", "Email", "Phone", "Actions"].map(
                   (heading) => (
                     <th
                       key={heading}
                       scope="col"
-                      className="whitespace-nowrap px-4 py-3 font-medium"
+                      className="whitespace-nowrap px-4 py-3 font-medium text-center"
                     >
                       {heading}
                     </th>
@@ -173,7 +283,7 @@ export const TaxClients = () => {
               taxClients.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-10 text-center text-gray-500"
                   >
                     {!selectedFirmId
@@ -191,22 +301,51 @@ export const TaxClients = () => {
                     key={client.taxPersonClientId ?? index}
                     className="border-t"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center">
                       {[client.taxpayerFirstName, client.taxpayerLastName]
                         .filter(Boolean)
                         .join(" ") || "Not provided"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center">
                       {selectedFirmName || selectedFirmId}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center">
                       {client.taxYear ?? "Not provided"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center">
                       {client.email || "Not provided"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center">
                       {client.phoneNumber || "Not provided"}
+                    </td>
+                    {/* <td className="px-4 py-3 text-center">
+                      {client. || "Not provided"}
+                    </td> */}
+                    <td className="px-4 py-3 flex text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        aria-label={`Edit ${selectClient(client).name}`}
+                        disabled={
+                          !client.taxPersonClientId || isUpdating || isDeleting
+                        }
+                        onClick={() => openEditDialog(client)}
+                      >
+                        <Edit size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        aria-label={`Delete ${selectClient(client).name}`}
+                        disabled={
+                          !client.taxPersonClientId || isUpdating || isDeleting
+                        }
+                        onClick={() => setDeletingClient(selectClient(client))}
+                      >
+                        <Trash size={16} />
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -215,6 +354,125 @@ export const TaxClients = () => {
           </table>
         </div>
       </section>
+      <Dialog
+        open={Boolean(editingClient)}
+        onOpenChange={(open) => {
+          if (!open && !isUpdating) setEditingClient(null);
+        }}
+      >
+        <DialogContent
+          className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
+          showCloseButton={!isUpdating}
+        >
+          <DialogHeader>
+            <DialogTitle>Edit tax client</DialogTitle>
+            <DialogDescription>
+              Update client details. Fields marked * are required.
+            </DialogDescription>
+          </DialogHeader>
+          {editingClient && (
+            <form
+              noValidate
+              onSubmit={handleSubmit(submitUpdate)}
+              className="space-y-4"
+            >
+              <fieldset
+                disabled={isUpdating}
+                className="grid gap-4 sm:grid-cols-2"
+              >
+                {editFields.map(({ name, label, required, type }) => (
+                  <div key={name} className="space-y-2">
+                    <Label htmlFor={`editClient-${name}`}>
+                      {label}
+                      {required && <span className="text-red-500"> *</span>}
+                    </Label>
+                    <Input
+                      {...register(name)}
+                      lettersOnly={
+                        name === "taxpayerFirstName" ||
+                        name === "taxpayerLastName"
+                      }
+                      id={`editClient-${name}`}
+                      type={type ?? "text"}
+                      aria-required={required}
+                      aria-invalid={Boolean(editErrors[name])}
+                      aria-describedby={
+                        editErrors[name]
+                          ? `editClient-${name}-error`
+                          : undefined
+                      }
+                      {...(type === "date" && {
+                        max: new Date().toISOString().split("T")[0],
+                      })}
+                    />
+                    {editErrors[name] && (
+                      <p
+                        id={`editClient-${name}-error`}
+                        role="alert"
+                        className="text-sm text-red-500"
+                      >
+                        {editErrors[name]?.message}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </fieldset>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isUpdating}
+                  onClick={() => setEditingClient(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={!isDirty || isUpdating}>
+                  {isUpdating ? "Saving..." : "Save changes"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={Boolean(deletingClient)}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setDeletingClient(null);
+        }}
+      >
+        <DialogContent showCloseButton={!isDeleting}>
+          <DialogHeader>
+            <DialogTitle>Delete tax client?</DialogTitle>
+            <DialogDescription>
+              Delete {deletingClient?.name}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isDeleting}
+              onClick={() => setDeletingClient(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={() => {
+                if (deletingClient && !isDeleting)
+                  deleteTaxClient(
+                    deletingClient.firmId,
+                    deletingClient.clientId,
+                  );
+              }}
+            >
+              {isDeleting ? "Deleting..." : "Delete tax client"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

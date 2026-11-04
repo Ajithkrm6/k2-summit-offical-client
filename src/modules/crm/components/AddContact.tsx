@@ -16,7 +16,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useAddContact } from "@/lib/api/hooks/k2-tax-api/useAddContact";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
-import { CreateContactFormData, createContactSchema } from "@/modules/crm/lib";
+import {
+  CreateContactFormData,
+  createContactSchema,
+  ROLE_TITLE_OPTIONS,
+} from "@/modules/crm/lib";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -65,7 +69,7 @@ export const AddContact = () => {
     router.push("/crm/addContact");
   };
 
-  const { addContact, isPending, error } = useAddContact({
+  const { addContact, isPending, errorMessage } = useAddContact({
     taxFirmId: selectedFirmId,
     onSuccess: handleAddContactSuccess,
   });
@@ -87,12 +91,10 @@ export const AddContact = () => {
 
   const roleOptions = [
     { label: "Select a role...", value: null },
-    { label: "Sales Representative", value: 1 },
-    { label: "Admin", value: 2 },
+    ...ROLE_TITLE_OPTIONS,
   ];
 
   const contactMethodOptions = [
-    { label: "Select a method...", value: null },
     { label: "Email", value: 2 },
     { label: "Phone", value: 3 },
   ];
@@ -113,9 +115,9 @@ export const AddContact = () => {
         </p>
       </div>
 
-      {error && (
+      {errorMessage && (
         <Alert variant="destructive">
-          <AlertDescription>{error.message}</AlertDescription>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
 
@@ -178,6 +180,7 @@ export const AddContact = () => {
               </Label>
               <Input
                 {...register("firstName")}
+                lettersOnly
                 id="firstName"
                 placeholder="John"
                 required
@@ -195,6 +198,7 @@ export const AddContact = () => {
               </Label>
               <Input
                 {...register("lastName")}
+                lettersOnly
                 id="lastName"
                 placeholder="Doe"
                 required
@@ -311,41 +315,44 @@ export const AddContact = () => {
               <Controller
                 name="preferredContactMethodTypeId"
                 control={control}
-                render={({ field }) => {
-                  const selectedItem = contactMethodOptions.find(
-                    (item) => item.value === field.value,
-                  );
-                  return (
-                    <Select
-                      onValueChange={(value) =>
-                        field.onChange(value ? Number(value) : undefined)
-                      }
-                      value={field.value?.toString() || ""}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(value ? Number(value) : undefined)
+                    }
+                    value={field.value?.toString() || ""}
+                  >
+                    <SelectTrigger
+                      id="preferredContactMethodTypeId"
+                      className="w-full"
+                      aria-required="true"
+                      aria-invalid={Boolean(
+                        errors.preferredContactMethodTypeId,
+                      )}
                     >
-                      <SelectTrigger
-                        id="preferredContactMethodTypeId"
-                        className="w-full"
-                      >
-                        <SelectValue placeholder="Select a method">
-                          {selectedItem?.label}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Contact Methods</SelectLabel>
-                          {contactMethodOptions.map((item) => (
-                            <SelectItem
-                              key={item.value || "null"}
-                              value={(item.value || "").toString()}
-                            >
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  );
-                }}
+                      <SelectValue placeholder="Select a method">
+                        {
+                          contactMethodOptions.find(
+                            (item) => item.value === field.value,
+                          )?.label
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Contact Methods</SelectLabel>
+                        {contactMethodOptions.map((item) => (
+                          <SelectItem
+                            key={item.value}
+                            value={item.value.toString()}
+                          >
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
               />
               {errors.preferredContactMethodTypeId && (
                 <p className="text-red-500 text-sm">

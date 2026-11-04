@@ -5,6 +5,7 @@
  * use the correct base URL and settings from the environment
  */
 import axios from "axios";
+import { normalizeApiError } from "./api/error-message";
 
 // Set defaults for all axios instances
 axios.defaults.baseURL = "";
@@ -32,7 +33,7 @@ axios.interceptors.response.use(
         window.location.href = url.toString();
       }
     }
-    return Promise.reject(error);
+    return Promise.reject(normalizeApiError(error));
   },
 );
 

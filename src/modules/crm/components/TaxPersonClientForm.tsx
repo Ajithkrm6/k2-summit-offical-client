@@ -187,12 +187,21 @@ export const TaxPersonClientForm = () => {
               </Label>
               <Input
                 {...register(name)}
+                lettersOnly={[
+                  "taxpayerFirstName",
+                  "taxpayerLastName",
+                  "spouseFirstName",
+                  "spouseLastName",
+                ].includes(name)}
                 id={name}
                 type={type ?? "text"}
                 placeholder={placeholder}
                 aria-required={required}
                 aria-invalid={Boolean(errors[name])}
                 aria-describedby={errors[name] ? `${name}-error` : undefined}
+                {...(type === "date" && {
+                  max: new Date().toISOString().split("T")[0],
+                })}
               />
               {errors[name] && (
                 <p

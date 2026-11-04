@@ -6,6 +6,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import type { CreateTaxFirmContactRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import type { AxiosError } from "axios";
+import { getApiErrorMessage } from "../../error-message";
 
 interface UseAddContactProps {
   taxFirmId: string;
@@ -38,14 +39,10 @@ export const useAddContact = ({ taxFirmId, onSuccess }: UseAddContactProps) => {
           });
           onSuccess?.();
         },
-        onError: (error: AxiosError) => {
-          const errorMessage =
-            (error.response?.data as Record<string, unknown>)?.message ||
-            error.message ||
-            "Failed to add contact";
+        onError: (error: AxiosError<unknown>) => {
           toast.add({
             title: "Failed to add contact",
-            description: String(errorMessage),
+            description: getApiErrorMessage(error, "Failed to add contact"),
             type: "error",
           });
           console.error("Add contact failed:", error);
@@ -62,5 +59,8 @@ export const useAddContact = ({ taxFirmId, onSuccess }: UseAddContactProps) => {
     isPending,
     isSuccess,
     error,
+    errorMessage: error
+      ? getApiErrorMessage(error, "Failed to add contact")
+      : null,
   };
 };

@@ -3,6 +3,25 @@ import { Input } from "./input";
 
 describe("Input phone entry", () => {
   it.each([
+    ["John123@!", "John"],
+    ["Mary Jane", "Mary Jane"],
+    ["ABCxyz", "ABCxyz"],
+    ["123!@#$", ""],
+    ["Jane\tDoe\n", "JaneDoe"],
+  ])("filters name input %j before notifying the form", (value, expected) => {
+    const onChange = vi.fn();
+    const input = Input({ lettersOnly: true, onChange });
+    const target = { value };
+    const event = { currentTarget: target, target };
+
+    input.props.onChange(event);
+
+    expect(target.value).toBe(expected);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(event);
+    expect(input.props.lettersOnly).toBeUndefined();
+  });
+
+  it.each([
     ["abc", ""],
     ["+1555abc1234567", "+15551234567"],
     ["+1 (555) 123-4567", "+15551234567"],

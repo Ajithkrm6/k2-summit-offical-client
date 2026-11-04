@@ -1,5 +1,23 @@
 import * as z from "zod";
 
+const personNameSchema = (label: string) =>
+  z
+    .string({ error: `${label} is required` })
+    .trim()
+    .regex(/^[A-Za-z ]*$/, `${label} must contain only letters and spaces`);
+
+const pastDateSchema = (label: string) =>
+  z
+    .union([z.literal(""), z.string().date()])
+    .refine((value) => {
+      if (!value) return true;
+      const date = new Date(value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date <= today;
+    }, `${label} cannot be in the future`)
+    .optional();
+
 export const phoneNumberSchema = z
   .string()
   .refine(
@@ -21,9 +39,7 @@ export const createTaxFirmSchema = z.object({
   leadStatusTypeId: z.number({ error: "Lead status is required" }).int(),
   firmTypeId: z.number({ error: "Firm type is required" }).int(),
   credentialTypeId: z.number().int().nullable().optional(),
-  firmName: z
-    .string({ error: "Firm name is required" })
-    .trim()
+  firmName: personNameSchema("Firm name")
     .min(1, "Firm name is required")
     .max(255, "Firm name cannot exceed 255 characters"),
   address: z
@@ -107,14 +123,10 @@ export const createTaxFirmSchema = z.object({
 
 export const createContactSchema = z.object({
   firmId: z.string().min(1, "Please select a firm"),
-  firstName: z
-    .string({ error: "First name is required" })
-    .trim()
+  firstName: personNameSchema("First name")
     .min(1, "First name is required")
     .max(255, "First name cannot exceed 255 characters"),
-  lastName: z
-    .string({ error: "Last name is required" })
-    .trim()
+  lastName: personNameSchema("Last name")
     .min(1, "Last name is required")
     .max(255, "Last name cannot exceed 255 characters"),
   roleTitleTypeId: z
@@ -148,6 +160,12 @@ export const createContactSchema = z.object({
 // Tax Client Schemas
 // ============================================================================
 
+export const editContactSchema = createContactSchema.omit({
+  firmId: true,
+  bestTimeToReach: true,
+});
+export type EditContactFormData = z.infer<typeof editContactSchema>;
+
 export const createTaxClientSchema = z.object({
   firmId: z.string().min(1, "Firm is required"),
   taxYear: z
@@ -155,18 +173,22 @@ export const createTaxClientSchema = z.object({
     .min(1, "Tax year is required")
     .regex(/^\d{4}$/, "Tax year must be a four-digit year"),
   clientStatus: z.string().optional(),
-  taxpayerFirstName: z.string().trim().min(1, "First name is required"),
-  taxpayerLastName: z.string().trim().min(1, "Last name is required"),
+  taxpayerFirstName: personNameSchema("First name").min(
+    1,
+    "First name is required",
+  ),
+  taxpayerLastName: personNameSchema("Last name").min(
+    1,
+    "Last name is required",
+  ),
   taxpayerSSN: z
     .string()
     .min(1, "SSN is required")
     .regex(/^\d{3}-\d{2}-\d{4}$/, "SSN must be in format XXX-XX-XXXX"),
-  taxpayerDOB: z
-    .union([z.literal(""), z.iso.date("Invalid date of birth")])
-    .optional(),
+  taxpayerDOB: pastDateSchema("Date of birth"),
   taxpayerOccupation: z.string().optional(),
-  spouseFirstName: z.string().optional(),
-  spouseLastName: z.string().optional(),
+  spouseFirstName: personNameSchema("Spouse first name").optional(),
+  spouseLastName: personNameSchema("Spouse last name").optional(),
   spouseSsn: z
     .union([
       z.literal(""),
@@ -175,9 +197,7 @@ export const createTaxClientSchema = z.object({
         .regex(/^\d{3}-\d{2}-\d{4}$/, "SSN must be in format XXX-XX-XXXX"),
     ])
     .optional(),
-  spouseDob: z
-    .union([z.literal(""), z.iso.date("Invalid date of birth")])
-    .optional(),
+  spouseDob: pastDateSchema("Spouse date of birth"),
   spouseOccupation: z.string().optional(),
   filingStatus: z.string().optional(),
   mailingAddress: z.string().optional(),
@@ -205,6 +225,18 @@ export const createTaxClientSchema = z.object({
 // ============================================================================
 // Document Upload Schemas
 // ============================================================================
+
+export const editTaxClientSchema = createTaxClientSchema.pick({
+  taxpayerFirstName: true,
+  taxpayerLastName: true,
+  taxYear: true,
+  taxpayerSSN: true,
+  taxpayerDOB: true,
+  mailingAddress: true,
+  phoneNumber: true,
+  email: true,
+});
+export type EditTaxClientFormData = z.infer<typeof editTaxClientSchema>;
 
 export const uploadDocumentsSchema = z.object({
   taxPersonClientId: z.string().min(1, "Client is required"),

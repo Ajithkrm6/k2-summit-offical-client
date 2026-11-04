@@ -75,6 +75,27 @@ describe("useAddTaxClient", () => {
     });
   });
 
+  it("shows the backend title instead of the HTTP status message", () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      useAddTaxClient();
+      useMutation.mock.calls[0][0].mutation.onError({
+        message: "Request failed with status code 409",
+        response: {
+          data: { title: "Client already exists", message: "Other message" },
+        },
+      });
+      expect(notify).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "error",
+          description: "Client already exists",
+        }),
+      );
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it("maps populated form fields to API names and numeric IDs", () => {
     useAddTaxClient().addTaxClient({
       ...form,

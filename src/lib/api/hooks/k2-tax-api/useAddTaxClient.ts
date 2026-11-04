@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { CreateTaxPersonClientRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import type { CreateTaxClientFormData } from "@/modules/crm/lib";
 import type { AxiosError } from "axios";
+import { getApiErrorMessage } from "../../error-message";
 
 interface UseAddTaxClientProps {
   onSuccess?: () => void;
@@ -49,13 +50,9 @@ export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
           onSuccess?.();
         },
         onError: (error: AxiosError) => {
-          const errorMessage =
-            (error.response?.data as Record<string, unknown>)?.message ||
-            error.message ||
-            "Failed to add tax client";
           toast.add({
             title: "Failed to add tax client",
-            description: String(errorMessage),
+            description: getApiErrorMessage(error, "Failed to add tax client"),
             type: "error",
           });
           console.error("Add tax client failed:", error);

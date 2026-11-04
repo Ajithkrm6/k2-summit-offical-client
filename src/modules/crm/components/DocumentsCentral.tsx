@@ -93,7 +93,22 @@ export const DocumentsCentral = () => {
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      const validFiles = files.filter((file) => {
+        if (
+          !file.type.includes("pdf") &&
+          !file.name.toLowerCase().endsWith(".pdf")
+        ) {
+          toast.add({
+            title: "Invalid file type",
+            description: `${file.name} is not a PDF. Only PDF files are supported.`,
+            type: "destructive",
+          });
+          return false;
+        }
+        return true;
+      });
+      setSelectedFiles(validFiles);
     }
   };
 
@@ -370,7 +385,7 @@ export const DocumentsCentral = () => {
           <div>
             <p className="text-lg font-medium">Drag & drop files here</p>
             <p className="text-sm text-gray-500">
-              Supported: PDF, Word, Excel, JPG, PNG (up to 25 MB per file)
+              Supported: PDF only (up to 25 MB per file)
             </p>
           </div>
           <Button
@@ -387,7 +402,7 @@ export const DocumentsCentral = () => {
             multiple
             onChange={onFileChange}
             className="hidden"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+            accept=".pdf"
             disabled={isPending}
           />
         </div>

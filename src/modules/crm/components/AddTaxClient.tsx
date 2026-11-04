@@ -183,11 +183,39 @@ export const AddTaxClient = () => {
               <Label htmlFor="taxYear">
                 Tax Year <span className="text-red-500">*</span>
               </Label>
-              <Input
-                {...register("taxYear")}
-                id="taxYear"
-                placeholder="2024"
-                aria-required="true"
+              <Controller
+                name="taxYear"
+                control={control}
+                render={({ field }) => {
+                  return (
+                    <Select
+                      onValueChange={(value) => value && field.onChange(value)}
+                      value={field.value ?? ""}
+                    >
+                      <SelectTrigger
+                        id="taxYear"
+                        className="w-full"
+                        aria-required="true"
+                        onBlur={field.onBlur}
+                      >
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Tax Years</SelectLabel>
+                          {Array.from(
+                            { length: 5 },
+                            (_, i) => new Date().getFullYear() - i,
+                          ).map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
               />
               {errors.taxYear && (
                 <p className="text-red-500 text-sm">{errors.taxYear.message}</p>
@@ -237,6 +265,7 @@ export const AddTaxClient = () => {
               </Label>
               <Input
                 {...register("taxpayerFirstName")}
+                lettersOnly
                 id="taxpayerFirstName"
                 placeholder="John"
                 aria-required="true"
@@ -254,6 +283,7 @@ export const AddTaxClient = () => {
               </Label>
               <Input
                 {...register("taxpayerLastName")}
+                lettersOnly
                 id="taxpayerLastName"
                 placeholder="Doe"
                 aria-required="true"
@@ -290,6 +320,7 @@ export const AddTaxClient = () => {
                 {...register("taxpayerDOB")}
                 id="taxpayerDOB"
                 type="date"
+                max={new Date().toISOString().split("T")[0]}
               />
               {errors.taxpayerDOB && (
                 <p className="text-red-500 text-sm">

@@ -39,6 +39,56 @@ describe("useAddContact", () => {
     });
   });
 
+  it("does not expose an error message before a failure", () => {
+    expect(useAddContact({ taxFirmId: "firm-1" }).errorMessage).toBeNull();
+  });
+
+  it.each([
+    [
+      { title: "A primary contact already exists", message: "Other message" },
+      "A primary contact already exists",
+    ],
+    [
+      { title: null, message: "Contact could not be added" },
+      "Contact could not be added",
+    ],
+    [
+      { title: "   ", message: "Contact could not be added" },
+      "Contact could not be added",
+    ],
+    [{ title: 400, message: {} }, "Request failed with status code 400"],
+    [undefined, "Request failed with status code 400"],
+  ])(
+    "uses the same API error message for the alert and toast (%j)",
+    (data, expected) => {
+      const error = {
+        response: { data },
+        message: "Request failed with status code 400",
+      };
+      mutation.mockReturnValue({
+        mutate,
+        isPending: false,
+        isSuccess: false,
+        error,
+      });
+      const log = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        const result = useAddContact({ taxFirmId: "firm-1" });
+        expect(result.error).toBe(error);
+        expect(result.errorMessage).toBe(expected);
+        mutation.mock.calls[0][0].mutation.onError(error);
+        expect(notify).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: "error",
+            description: expected,
+          }),
+        );
+      } finally {
+        log.mockRestore();
+      }
+    },
+  );
+
   it("invalidates the submitted firm's query before calling success", async () => {
     const onSuccess = vi.fn();
     useAddContact({ taxFirmId: "firm-2", onSuccess });

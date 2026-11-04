@@ -24,9 +24,11 @@ import type {
   ResetPasswordRequest,
 } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import { useAuthStore } from "@/modules/auth/store/auth.store";
+import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { getApiErrorMessage } from "../../error-message";
 
 /**
  * Actual API response structure for login
@@ -40,22 +42,6 @@ interface ActualLoginResponse {
 }
 
 /**
- * Helper to extract error message from API response
- */
-const getErrorMessage = (error: AxiosError, defaultMessage: string): string => {
-  if (error.response?.data) {
-    const data = error.response.data as Record<string, unknown>;
-    if (data.error && typeof data.error === "object") {
-      const errorObj = data.error as Record<string, unknown>;
-      if (typeof errorObj.message === "string") {
-        return errorObj.message;
-      }
-    }
-  }
-  return defaultMessage;
-};
-
-/**
  * Custom login hook
  * - Manages login API call
  * - Updates auth store with user data
@@ -64,6 +50,7 @@ const getErrorMessage = (error: AxiosError, defaultMessage: string): string => {
  */
 export const useLogin = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { setUser, setError, setLoading } = useAuthStore();
 
   // Store email to use after login success
@@ -82,6 +69,9 @@ export const useLogin = () => {
           data.data) as ActualLoginResponse;
 
         if (loginData?.appUserId) {
+          // Drop any cached data from a previous session (e.g. expired cookie without logout)
+          queryClient.clear();
+
           // Update auth store with user info
           // Token is automatically handled via httpOnly cookie by backend
           setUser({
@@ -118,7 +108,7 @@ export const useLogin = () => {
         }
       },
       onError: (error: AxiosError) => {
-        const errorMessage = getErrorMessage(
+        const errorMessage = getApiErrorMessage(
           error,
           "Login failed. Please check your credentials.",
         );
@@ -150,6 +140,7 @@ export const useLogin = () => {
  */
 export const useLogout = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { reset, setError, setLoading } = useAuthStore();
 
   const { mutate, ...rest } = usePostApiV1UserLogOut({
@@ -161,6 +152,9 @@ export const useLogout = () => {
       onSuccess: () => {
         // Clear auth state in store
         reset();
+
+        // Server data is per-user; drop it so the next account starts fresh
+        queryClient.clear();
 
         // Show success toast
         toast.add({
@@ -177,7 +171,7 @@ export const useLogout = () => {
         // Even if logout fails, clear local state
         // reset();
 
-        const errorMessage = getErrorMessage(error, "Logout failed");
+        const errorMessage = getApiErrorMessage(error, "Logout failed");
         setError(errorMessage);
         toast.add({
           title: "Logout failed",
@@ -226,7 +220,7 @@ export const useForgotPassword = () => {
         console.log("Sent password reset email...", isSuccess);
       },
       onError: (error: AxiosError) => {
-        const errorMessage = getErrorMessage(
+        const errorMessage = getApiErrorMessage(
           error,
           "Failed to send password reset email",
         );
@@ -279,7 +273,7 @@ export const useResetPassword = () => {
         router.push("/login");
       },
       onError: (error: AxiosError) => {
-        const errorMessage = getErrorMessage(error, "Password reset failed");
+        const errorMessage = getApiErrorMessage(error, "Password reset failed");
         setError(errorMessage);
         toast.add({
           title: "Password reset failed",

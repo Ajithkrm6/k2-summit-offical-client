@@ -13,24 +13,12 @@ import { toast } from "@/components/ui/toast";
 import apiClient from "@/lib/axios-config";
 import { useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
+import { getApiErrorMessage } from "../../error-message";
 import { useCRMStore } from "../../../../modules/crm/store/crm.store";
 import type {
   PostApiV1ClientDocumentsBody,
   UploadClientDocumentsResult,
 } from "../../generated/k2-tax-api/k2TaxAPI.schemas";
-
-/**
- * Helper to extract error message from API response
- */
-const getErrorMessage = (error: AxiosError, defaultMessage: string): string => {
-  if (error.response?.data) {
-    const data = error.response.data as Record<string, unknown>;
-    if (data.message && typeof data.message === "string") {
-      return data.message;
-    }
-  }
-  return defaultMessage;
-};
 
 /**
  * Custom upload documents hook
@@ -78,7 +66,10 @@ export const useUploadDocuments = () => {
       });
     },
     onError: (error: AxiosError) => {
-      const errorMessage = getErrorMessage(error, "Failed to upload documents");
+      const errorMessage = getApiErrorMessage(
+        error,
+        "Failed to upload documents",
+      );
       setSuccess(false);
       setError(errorMessage);
       toast.add({

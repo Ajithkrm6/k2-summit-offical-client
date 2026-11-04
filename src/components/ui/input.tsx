@@ -8,8 +8,9 @@ function Input({
   onChange,
   onFocus,
   onBlur,
+  lettersOnly = false,
   ...props
-}: React.ComponentProps<"input">) {
+}: React.ComponentProps<"input"> & { lettersOnly?: boolean }) {
   return (
     <InputPrimitive
       type={type}
@@ -27,6 +28,12 @@ function Input({
         onBlur?.(event);
       }}
       onChange={(event) => {
+        if (lettersOnly) {
+          event.currentTarget.value = event.currentTarget.value.replace(
+            /[^A-Za-z ]/g,
+            "",
+          );
+        }
         if (type === "tel") {
           const value = event.currentTarget.value;
           const digits = (value.startsWith("+1") ? value.slice(2) : value)

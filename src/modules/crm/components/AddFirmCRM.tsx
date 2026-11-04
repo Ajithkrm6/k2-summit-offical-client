@@ -124,7 +124,7 @@ export const AddFirmCRM = () => {
               <Label htmlFor="firmName">
                 Firm Name<span className="text-red-500">*</span>
               </Label>
-              <Input {...register("firmName")} id="firmName" />
+              <Input {...register("firmName")} id="firmName" lettersOnly />
               {errors.firmName && (
                 <p className="text-red-500">{errors.firmName.message}</p>
               )}

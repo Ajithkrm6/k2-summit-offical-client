@@ -1,4 +1,5 @@
 import axios from "axios";
+import { normalizeApiError } from "./api/error-message";
 
 /**
  * API Client
@@ -37,7 +38,7 @@ apiClient.interceptors.response.use(
         window.location.href = url.toString();
       }
     }
-    return Promise.reject(error);
+    return Promise.reject(normalizeApiError(error));
   },
 );
 

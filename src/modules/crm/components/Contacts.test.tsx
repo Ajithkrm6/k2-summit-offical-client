@@ -24,8 +24,8 @@ vi.mock("react-hook-form", async (importOriginal) => ({
 
 vi.mock("@/components/ui/button", () => ({
   buttonVariants: () => "button",
-  Button: ({ children }: { children: React.ReactNode }) =>
-    createElement("button", null, children),
+  Button: ({ children, ...props }: React.ComponentProps<"button">) =>
+    createElement("button", props, children),
 }));
 
 vi.mock("@/components/ui/alert", () => ({
@@ -53,6 +53,48 @@ vi.mock("@/components/ui/select", () => {
 });
 
 import { Contacts } from "./Contacts";
+
+vi.mock("@/modules/crm/lib", async () => import("../lib"));
+vi.mock(
+  "@/components/ui/input",
+  async () => import("../../../components/ui/input"),
+);
+vi.mock(
+  "@/components/ui/checkbox",
+  async () => import("../../../components/ui/checkbox"),
+);
+vi.mock("@/lib/api/hooks/k2-tax-api/useUpdateContact", () => ({
+  useUpdateContact: () => ({ updateContact: vi.fn(), isPending: false }),
+}));
+vi.mock("@/lib/api/hooks/k2-tax-api/useDeleteContact", () => ({
+  useDeleteContact: () => ({ deleteContact: vi.fn(), isPending: false }),
+}));
+vi.mock("@/lib/api/hooks/k2-tax-api/useLookupData", () => ({
+  useLookupData: () => ({
+    contactTypes: [],
+    contactMethodTypes: [],
+    isLoading: false,
+    error: null,
+  }),
+}));
+vi.mock("@/components/ui/dialog", () => {
+  const Container = ({ children }: { children: React.ReactNode }) =>
+    createElement("div", null, children);
+  return {
+    Dialog: ({
+      open,
+      children,
+    }: {
+      open: boolean;
+      children: React.ReactNode;
+    }) => (open ? createElement("div", null, children) : null),
+    DialogContent: Container,
+    DialogDescription: Container,
+    DialogFooter: Container,
+    DialogHeader: Container,
+    DialogTitle: Container,
+  };
+});
 
 describe("Contacts", () => {
   beforeEach(() => {
@@ -136,7 +178,7 @@ describe("Contacts", () => {
     for (const value of [
       "Jane Doe",
       "Example Firm",
-      "Role 2",
+      "Admin",
       "jane@example.com",
       "555-1234",
       "555-5678",
@@ -147,5 +189,7 @@ describe("Contacts", () => {
       expect(markup).toContain(value);
     }
     expect(contactsQuery).toHaveBeenCalledWith("firm-1");
+    expect(markup).toContain('aria-label="Edit Jane Doe"');
+    expect(markup).toContain('aria-label="Delete Jane Doe"');
   });
 });
