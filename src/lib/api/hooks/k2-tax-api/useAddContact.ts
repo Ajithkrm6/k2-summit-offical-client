@@ -1,6 +1,7 @@
 import { toast } from "@/components/ui/toast";
 import {
   getGetApiV1TaxFirmTaxFirmIdTaxFirmContactsQueryKey,
+  getGetApiV1UserTaxFirmsQueryKey,
   usePostApiV1TaxFirmTaxfirmidContact,
 } from "@/lib/api/generated/k2-tax-api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,10 +28,15 @@ export const useAddContact = ({ taxFirmId, onSuccess }: UseAddContactProps) => {
     usePostApiV1TaxFirmTaxfirmidContact({
       mutation: {
         onSuccess: async (_response, variables) => {
+          // Invalidate contact list for this specific firm
           await queryClient.invalidateQueries({
             queryKey: getGetApiV1TaxFirmTaxFirmIdTaxFirmContactsQueryKey(
               variables.taxfirmid,
             ),
+          });
+          // Invalidate parent firm list so summaries update (MEDIUM #2 fix)
+          await queryClient.invalidateQueries({
+            queryKey: getGetApiV1UserTaxFirmsQueryKey(),
           });
           toast.add({
             title: "Contact added successfully",

@@ -132,7 +132,12 @@ export const AddContact = () => {
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger id="firmSelect" className="w-full">
-                    <SelectValue placeholder="Select a firm" />
+                    <SelectValue placeholder="Select a firm">
+                      {field.value
+                        ? firmOptions.find((f) => f.id === field.value)?.name ||
+                          field.value
+                        : "Select a firm"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>

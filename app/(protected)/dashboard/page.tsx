@@ -310,8 +310,13 @@ export default function DashboardPage() {
   const { updateTaxFirm, isPending: isUpdating } = useUpdateTaxFirm({
     onSuccess: () => setEditingFirm(null),
   });
-  const { deleteTaxFirm, isPending: isDeleting } = useDeleteTaxFirm({
+  const {
+    deleteTaxFirm,
+    isPending: isDeleting,
+    isError: isDeleteError,
+  } = useDeleteTaxFirm({
     onSuccess: () => setDeletingFirm(null),
+    onError: () => setDeletingFirm(null),
   });
   const {
     register,

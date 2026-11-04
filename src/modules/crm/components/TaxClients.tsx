@@ -209,7 +209,15 @@ export const TaxClients = () => {
                   onValueChange={field.onChange}
                 >
                   <SelectTrigger id="firmSelect" className="w-full">
-                    <SelectValue placeholder="Select a firm" />
+                    <SelectValue placeholder="Select a firm">
+                      {field.value || firstFirmId
+                        ? firmOptions.find(
+                            (f) => f.id === (field.value || firstFirmId),
+                          )?.name ||
+                          field.value ||
+                          firstFirmId
+                        : "Select a firm"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>

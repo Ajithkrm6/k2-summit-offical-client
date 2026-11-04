@@ -17,7 +17,6 @@ import { CreateTaxFirmRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.sc
 import { useAddTaxFirm } from "@/lib/api/hooks/k2-tax-api/useAddTaxFirm";
 import { useLookupData } from "@/lib/api/hooks/k2-tax-api/useLookupData";
 import { CreateTaxFirmFormData, createTaxFirmSchema } from "@/modules/crm/lib";
-import { useCRMStore } from "@/modules/crm/store/crm.store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -60,8 +59,12 @@ export const AddFirmCRM = () => {
         ]
       : [],
   );
-  const { addTaxFirm, isPending, isSuccess } = useAddTaxFirm();
-  const { error, setSuccess } = useCRMStore();
+  const {
+    addTaxFirm,
+    isPending,
+    isSuccess,
+    error: firmError,
+  } = useAddTaxFirm();
   const {
     handleSubmit,
     register,
@@ -81,9 +84,8 @@ export const AddFirmCRM = () => {
   useEffect(() => {
     if (isSuccess && !isPending) {
       reset();
-      setSuccess(false);
     }
-  }, [isSuccess, isPending, reset, setSuccess]);
+  }, [isSuccess, isPending, reset]);
 
   const items = [
     { label: "Select a firm type", value: null },
@@ -103,9 +105,9 @@ export const AddFirmCRM = () => {
         Activities and Tax clients.
       </p>
 
-      {error && (
+      {firmError && (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{firmError}</AlertDescription>
         </Alert>
       )}
       {lookupError && (

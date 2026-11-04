@@ -4,17 +4,20 @@ import {
   useDeleteApiV1TaxFirmTaxFirmId,
 } from "@/lib/api/generated/k2-tax-api";
 import { useQueryClient } from "@tanstack/react-query";
+import { getApiErrorMessage } from "../../error-message";
 import type { AxiosError } from "axios";
 
 interface UseDeleteTaxFirmOptions {
   onSuccess?: () => void;
+  onError?: () => void;
 }
 
 export const useDeleteTaxFirm = ({
   onSuccess,
+  onError,
 }: UseDeleteTaxFirmOptions = {}) => {
   const queryClient = useQueryClient();
-  const { mutate, isPending } = useDeleteApiV1TaxFirmTaxFirmId({
+  const { mutate, isPending, error, isError } = useDeleteApiV1TaxFirmTaxFirmId({
     mutation: {
       onSuccess: async (response) => {
         const result = response.data;
@@ -27,6 +30,7 @@ export const useDeleteTaxFirm = ({
             description: message,
             type: "error",
           });
+          onError?.();
           return;
         }
 
@@ -39,13 +43,14 @@ export const useDeleteTaxFirm = ({
         });
         onSuccess?.();
       },
-      onError: (error: AxiosError) => {
+      onError: (err: AxiosError) => {
         toast.add({
           title: "Failed to delete tax firm",
-          description: error.message,
+          description: getApiErrorMessage(err, "Failed to delete tax firm"),
           type: "error",
         });
-        console.error("Delete tax firm failed:", error);
+        console.error("Delete tax firm failed:", err);
+        onError?.();
       },
     },
   });
@@ -53,5 +58,9 @@ export const useDeleteTaxFirm = ({
   return {
     deleteTaxFirm: (taxFirmId: string) => mutate({ taxFirmId }),
     isPending,
+    error: error
+      ? getApiErrorMessage(error, "Failed to delete tax firm")
+      : null,
+    isError,
   };
 };

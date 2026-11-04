@@ -23,7 +23,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 interface ClientStatusOption {
   value: string;
@@ -85,6 +85,8 @@ export const AddTaxClient = () => {
       name: firm.firmName || "Unknown",
     })) || [];
 
+  const selectedFirmId = useWatch({ control, name: "firmId" });
+
   const onSubmit = (data: CreateTaxClientFormData) => {
     addTaxClient(data);
   };
@@ -144,7 +146,12 @@ export const AddTaxClient = () => {
                   className="w-full"
                   aria-required="true"
                 >
-                  <SelectValue placeholder="Select a firm" />
+                  <SelectValue placeholder="Select a firm">
+                    {selectedFirmId
+                      ? firmOptions.find((f) => f.id === selectedFirmId)
+                          ?.name || selectedFirmId
+                      : "Select a firm"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>

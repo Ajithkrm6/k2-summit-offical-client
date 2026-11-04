@@ -1,5 +1,4 @@
 import { toast } from "@/components/ui/toast";
-import { useCRMStore } from "../../../../modules/crm/store/crm.store";
 import {
   getGetApiV1UserTaxFirmsQueryKey,
   usePostApiV1TaxFirm,
@@ -8,24 +7,21 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CreateTaxFirmRequest } from "../../generated/k2-tax-api/k2TaxAPI.schemas";
 import { getApiErrorMessage } from "../../error-message";
 
+/**
+ * Custom hook to add a tax firm
+ * - Manages firm creation via TanStack Query mutation
+ * - Invalidates firm list after successful creation
+ * - Returns mutation state directly (no Zustand dependency) - MEDIUM #5 Fix
+ */
 export const useAddTaxFirm = () => {
   const queryClient = useQueryClient();
-  const { setLoading, setError, setSuccess, isLoading, success } =
-    useCRMStore();
-  const { mutate } = usePostApiV1TaxFirm({
+  const { mutate, isPending, isSuccess, error } = usePostApiV1TaxFirm({
     mutation: {
-      onMutate: () => {
-        setSuccess(false);
-        setError(null);
-        setLoading(true);
-      },
       onSuccess: async (response) => {
         if (response.data.isError) {
           const message =
             response.data.firstError?.description ||
             "The tax firm could not be added";
-          setSuccess(false);
-          setError(message);
           toast.add({
             title: "Failed to add Tax Firm",
             description: message,
@@ -36,24 +32,15 @@ export const useAddTaxFirm = () => {
         await queryClient.invalidateQueries({
           queryKey: getGetApiV1UserTaxFirmsQueryKey(),
         });
-        setSuccess(true);
         toast.add({ title: "Tax Firm added successfully" });
       },
-      onError: (error) => {
-        const errorMessage = getApiErrorMessage(
-          error,
-          "Failed to add tax firm",
-        );
-        setSuccess(false);
-        setError(errorMessage);
+      onError: (err) => {
+        const errorMessage = getApiErrorMessage(err, "Failed to add tax firm");
         toast.add({
           title: "Failed to add Tax Firm",
           description: errorMessage,
           type: "error",
         });
-      },
-      onSettled: () => {
-        setLoading(false);
       },
     },
   });
@@ -66,7 +53,8 @@ export const useAddTaxFirm = () => {
           credentialTypeId: data.credentialTypeId ?? null,
         },
       }),
-    isSuccess: success,
-    isPending: isLoading,
+    isPending,
+    isSuccess,
+    error: error ? getApiErrorMessage(error, "Failed to add tax firm") : null,
   };
 };

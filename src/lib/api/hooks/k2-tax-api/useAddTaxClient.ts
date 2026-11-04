@@ -1,6 +1,7 @@
 import { toast } from "@/components/ui/toast";
 import {
   getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey,
+  getGetApiV1UserTaxFirmsQueryKey,
   usePostApiV1TaxFirmTaxfirmidTaxPersonClient,
 } from "@/lib/api/generated/k2-tax-api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,10 +38,15 @@ export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
             });
             return;
           }
+          // Invalidate client list for this specific firm
           await queryClient.invalidateQueries({
             queryKey: getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey(
               variables.taxfirmid,
             ),
+          });
+          // Invalidate parent firm list so summaries update (MEDIUM #2 fix)
+          await queryClient.invalidateQueries({
+            queryKey: getGetApiV1UserTaxFirmsQueryKey(),
           });
           toast.add({
             title: "Tax client added successfully",
