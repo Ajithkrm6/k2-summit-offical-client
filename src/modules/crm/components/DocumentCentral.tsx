@@ -71,20 +71,20 @@ export const DocumentsCentral = () => {
           .join(" ") || "Unknown",
     }));
 
-  // Set first client on firm change or reset if no clients available
+  // Set first client when firm changes or reset if no clients available
   useEffect(() => {
-    if (clientOptions.length > 0) {
-      const firstClientId = clientOptions[0]?.id;
-      if (firstClientId && selectedClientId !== firstClientId) {
+    const firstClientId = clientOptions[0]?.id;
+
+    if (clientOptions.length > 0 && !selectedClientId) {
+      // Only auto-select first client if no client is currently selected
+      if (firstClientId) {
         setValue("clientId", firstClientId);
       }
-    } else {
+    } else if (clientOptions.length === 0 && selectedClientId) {
       // Reset client when no clients available
-      if (selectedClientId) {
-        setValue("clientId", "");
-      }
+      setValue("clientId", "");
     }
-  }, [clientOptions, selectedClientId, setValue]);
+  }, [selectedFirmId, clientOptions.length, selectedClientId, setValue]);
 
   // Fetch documents for selected client
   const {
