@@ -9,12 +9,24 @@ function Input({
   onFocus,
   onBlur,
   lettersOnly = false,
+  numbersOnly = false,
+  ssnFormat = false,
   ...props
-}: React.ComponentProps<"input"> & { lettersOnly?: boolean }) {
+}: React.ComponentProps<"input"> & {
+  lettersOnly?: boolean;
+  numbersOnly?: boolean;
+  ssnFormat?: boolean;
+}) {
   return (
     <InputPrimitive
       type={type}
-      inputMode={type === "tel" ? "tel" : undefined}
+      inputMode={
+        type === "tel"
+          ? "tel"
+          : numbersOnly || ssnFormat
+            ? "numeric"
+            : undefined
+      }
       onFocus={(event) => {
         if (type === "tel" && !event.currentTarget.value) {
           event.currentTarget.value = "+1";
@@ -33,6 +45,26 @@ function Input({
             /[^A-Za-z ]/g,
             "",
           );
+        }
+        if (numbersOnly && !ssnFormat) {
+          event.currentTarget.value = event.currentTarget.value.replace(
+            /[^0-9]/g,
+            "",
+          );
+        }
+        if (ssnFormat) {
+          // Allow only numbers
+          let value = event.currentTarget.value.replace(/[^0-9]/g, "");
+          // Format as XXX-XX-XXXX
+          if (value.length > 3) {
+            value = value.slice(0, 3) + "-" + value.slice(3);
+          }
+          if (value.length > 6) {
+            value = value.slice(0, 6) + "-" + value.slice(6);
+          }
+          // Limit to XXX-XX-XXXX (11 chars total with dashes)
+          value = value.slice(0, 11);
+          event.currentTarget.value = value;
         }
         if (type === "tel") {
           const value = event.currentTarget.value;

@@ -310,6 +310,7 @@ export const AddTaxClient = () => {
               </Label>
               <Input
                 {...register("taxpayerSSN")}
+                ssnFormat
                 id="taxpayerSSN"
                 placeholder="123-45-6789"
                 aria-required="true"

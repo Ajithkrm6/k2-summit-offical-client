@@ -408,6 +408,7 @@ export const TaxClients = () => {
                         name === "taxpayerFirstName" ||
                         name === "taxpayerLastName"
                       }
+                      ssnFormat={name === "taxpayerSSN"}
                       id={`editClient-${name}`}
                       type={type ?? "text"}
                       aria-required={required}

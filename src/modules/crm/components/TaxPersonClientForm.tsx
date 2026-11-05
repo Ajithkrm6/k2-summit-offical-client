@@ -193,6 +193,7 @@ export const TaxPersonClientForm = () => {
                   "spouseFirstName",
                   "spouseLastName",
                 ].includes(name)}
+                ssnFormat={name === "taxpayerSSN" || name === "spouseSsn"}
                 id={name}
                 type={type ?? "text"}
                 placeholder={placeholder}
