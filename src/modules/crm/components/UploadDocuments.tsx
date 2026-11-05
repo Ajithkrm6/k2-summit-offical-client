@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey } from "@/lib/api/generated/k2-tax-api";
 import type { PostApiV1ClientDocumentsBody } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import { useGetTaxClients } from "@/lib/api/hooks/k2-tax-api/useGetTaxClients";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
@@ -22,22 +23,24 @@ import {
   uploadDocumentsSchema,
   type UploadDocumentsFormData,
 } from "@/modules/crm/lib";
-import { useCRMStore } from "@/modules/crm/store/crm.store";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-/**
- * Document Upload Form Schema
- */
 
-export const DocumentsCentral = () => {
+export const UploadDocuments = () => {
+  const queryClient = useQueryClient();
   const {
     taxFirms,
     isLoading: firmsLoading,
     error: firmsError,
   } = useGetTaxFirms();
-  const { uploadDocuments, isPending, isSuccess } = useUploadDocuments();
-  const { error, setSuccess } = useCRMStore();
+  const {
+    uploadDocuments,
+    isPending,
+    isSuccess,
+    error: uploadError,
+  } = useUploadDocuments();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedFirmId, setSelectedFirmId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +70,31 @@ export const DocumentsCentral = () => {
     error: clientsError,
     refetch,
   } = useGetTaxClients(selectedFirmId);
+
+  // Issue #2: Prefetch new firm's clients when selectedFirmId changes to avoid stale data race condition
+  // Issue #3: Reset query cache when selectedFirmId changes to clear errors from previous firm selection
+  useEffect(() => {
+    if (selectedFirmId) {
+      // Prefetch: Load new firm's clients data immediately for smooth transition
+      queryClient.prefetchQuery({
+        queryKey:
+          getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey(selectedFirmId),
+        queryFn: async () => {
+          const response = await fetch(
+            `/api/v1/TaxFirm/${selectedFirmId}/TaxPersonClients`,
+          );
+          if (!response.ok) throw new Error("Failed to fetch clients");
+          return response.json();
+        },
+      });
+
+      // Reset: Clear any errors from previous firm selection
+      queryClient.resetQueries({
+        queryKey:
+          getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey(selectedFirmId),
+      });
+    }
+  }, [selectedFirmId, queryClient]);
 
   const clientOptions = taxClients.flatMap((client) => {
     if (!client.taxPersonClientId) {
@@ -146,10 +174,9 @@ export const DocumentsCentral = () => {
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
-        setSuccess(false);
       }, 0);
     }
-  }, [isSuccess, isPending, reset, setSuccess]);
+  }, [isSuccess, isPending, reset]);
 
   return (
     <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
@@ -160,9 +187,9 @@ export const DocumentsCentral = () => {
         hand.
       </p>
 
-      {error && (
+      {uploadError && (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{uploadError}</AlertDescription>
         </Alert>
       )}
       {firmsError && (
@@ -191,13 +218,20 @@ export const DocumentsCentral = () => {
         {/* Form Fields Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="firmSelect">Select Firm *</Label>
+            <Label htmlFor="firmSelect">
+              Select Firm <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={selectedFirmId}
               onValueChange={(value) => setSelectedFirmId(value ?? "")}
             >
               <SelectTrigger id="firmSelect" className="w-full">
-                <SelectValue placeholder="Select a firm" />
+                <SelectValue placeholder="Select a firm">
+                  {selectedFirmId
+                    ? firmOptions.find((f) => f.id === selectedFirmId)?.name ||
+                      selectedFirmId
+                    : "Select a firm"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -223,7 +257,9 @@ export const DocumentsCentral = () => {
           </div>
           {/* Tax Client */}
           <div className="space-y-2">
-            <Label htmlFor="taxPersonClientId">Tax Client *</Label>
+            <Label htmlFor="taxPersonClientId">
+              Tax Client <span className="text-red-500">*</span>
+            </Label>
             <Controller
               name="taxPersonClientId"
               control={control}
@@ -274,7 +310,9 @@ export const DocumentsCentral = () => {
 
           {/* Tax Year */}
           <div className="space-y-2">
-            <Label htmlFor="taxYear">Tax Year *</Label>
+            <Label htmlFor="taxYear">
+              Tax Year <span className="text-red-500">*</span>
+            </Label>
             <Controller
               name="taxYear"
               control={control}
@@ -313,7 +351,9 @@ export const DocumentsCentral = () => {
 
           {/* Document Type */}
           <div className="space-y-2">
-            <Label htmlFor="formType">Document Type *</Label>
+            <Label htmlFor="formType">
+              Document Type <span className="text-red-500">*</span>
+            </Label>
             <Controller
               name="formType"
               control={control}

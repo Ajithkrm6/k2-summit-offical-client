@@ -70,12 +70,14 @@ export const TaxClients = () => {
   });
   const { deleteTaxClient, isPending: isDeleting } = useDeleteTaxClient({
     onSuccess: () => setDeletingClient(null),
+    onError: () => setDeletingClient(null),
   });
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors: editErrors, isDirty },
+    clearErrors,
   } = useForm<EditTaxClientFormData>({
     resolver: zodResolver(editTaxClientSchema),
     mode: "onChange",
@@ -133,6 +135,7 @@ export const TaxClients = () => {
   });
 
   const openEditDialog = (client: GetTaxPersonClientByTaxFirmIdResponse) => {
+    clearErrors();
     reset({
       taxpayerFirstName: client.taxpayerFirstName ?? "",
       taxpayerLastName: client.taxpayerLastName ?? "",
@@ -199,7 +202,9 @@ export const TaxClients = () => {
         </div>
         <div className="space-y-4 flex flex-col ">
           <div className="space-y-2">
-            <Label htmlFor="firmSelect">Select Firm *</Label>
+            <Label htmlFor="firmSelect">
+              Select Firm <span className="text-red-500">*</span>
+            </Label>
             <Controller
               name="firmId"
               control={control}
@@ -365,7 +370,10 @@ export const TaxClients = () => {
       <Dialog
         open={Boolean(editingClient)}
         onOpenChange={(open) => {
-          if (!open && !isUpdating) setEditingClient(null);
+          if (!open && !isUpdating) {
+            setEditingClient(null);
+            reset();
+          }
         }}
       >
         <DialogContent

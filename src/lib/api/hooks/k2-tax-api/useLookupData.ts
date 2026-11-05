@@ -25,6 +25,7 @@ interface LookupApiResponse extends LookupResponse {
  * API Response Structure:
  * - roleTitleTypes → maps to contactTypes
  * - preferredContactMethodTypes → maps to contactMethodTypes
+ * - activityTypes → maps to activityTypes (no mapping needed)
  * - Other fields pass through as-is
  */
 export const useLookupData = () => {
@@ -56,6 +57,14 @@ export const useLookupData = () => {
         }))
       : [],
 
+    // Map activityTypes from API to activityTypes
+    activityTypes: rawResponse.activityTypes
+      ? rawResponse.activityTypes.map((item) => ({
+          activityTypeId: item.activityTypeId,
+          activityTypeName: item.name,
+        }))
+      : [],
+
     // Pass through other fields as-is
     contactRelationshipTypes: rawResponse.contactRelationshipTypes ?? [],
     firmTypes: rawResponse.firmTypes ?? [],
@@ -70,6 +79,7 @@ export const useLookupData = () => {
     firmTypes: normalizedData.firmTypes,
     credentialsTypes: normalizedData.credentialsTypes,
     leadStatusTypes: normalizedData.leadStatusTypes,
+    activityTypes: normalizedData.activityTypes,
     isLoading,
     error,
   };

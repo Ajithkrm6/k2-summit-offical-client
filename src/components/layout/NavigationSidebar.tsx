@@ -31,6 +31,7 @@ import {
   ScrollText,
   Settings,
   TrendingUp,
+  UserRoundGroup,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -104,7 +105,7 @@ const NAV_ITEMS: NavItem[] = [
     badgeVariant: "default",
     submenu: [
       {
-        icon: <Users className="w-5 h-5" />,
+        icon: <UserRoundGroup className="w-5 h-5" />,
         label: "New Tax Firm ",
         href: "/crm/addTaxFirm",
         featureGate: "crm.addTaxFirm",
@@ -117,12 +118,20 @@ const NAV_ITEMS: NavItem[] = [
         featureGate: "crm.addContact",
       },
       {
-        icon: <Activity className="w-5 h-5" />,
+        icon: <Users className="w-5 h-5" />,
         label: "Tax Clients",
         href: "/crm/addTaxClient",
         featureGate: "workpool.intake",
         badgeVariant: "beta-s1",
       },
+      {
+        icon: <Activity className="w-5 h-5" />,
+        label: "Activity",
+        href: "/crm/activity",
+        featureGate: "workpool.intake",
+        badgeVariant: "beta-s1",
+      },
+
       {
         icon: <FilePlusCornerIcon className="w-5 h-5" />,
         label: "Document Central",

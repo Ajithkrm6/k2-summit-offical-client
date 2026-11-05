@@ -1,5 +1,4 @@
-import { DocumentsCentral } from "@/modules/crm/components/DocumentsCentral";
-
+import { DocumentsCentral } from "@/modules/crm/components/DocumentCentral";
 export default function Page() {
   return <DocumentsCentral />;
 }

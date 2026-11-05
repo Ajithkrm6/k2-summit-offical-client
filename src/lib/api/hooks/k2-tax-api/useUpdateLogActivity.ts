@@ -1,0 +1,56 @@
+import { toast } from "@/components/ui/toast";
+import {
+  getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey,
+  usePatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId,
+  type UpdateLogActivityRequest,
+} from "@/lib/api/generated/k2-tax-api";
+import { useQueryClient } from "@tanstack/react-query";
+import { getApiErrorMessage } from "../../error-message";
+import type { AxiosError } from "axios";
+
+interface UseUpdateLogActivityOptions {
+  taxFirmId: string;
+  onSuccess?: () => void;
+}
+
+export const useUpdateLogActivity = ({
+  taxFirmId,
+  onSuccess,
+}: UseUpdateLogActivityOptions) => {
+  const queryClient = useQueryClient();
+  const { mutate, isPending, error } =
+    usePatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId({
+      mutation: {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({
+            queryKey:
+              getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey(taxFirmId),
+          });
+          toast.add({
+            title: "Activity updated successfully",
+            type: "success",
+          });
+          onSuccess?.();
+        },
+        onError: (err: AxiosError) => {
+          toast.add({
+            title: "Failed to update activity",
+            description: getApiErrorMessage(err, "Failed to update activity"),
+            type: "error",
+          });
+          console.error("Update log activity failed:", err);
+        },
+      },
+    });
+
+  return {
+    updateLogActivity: (
+      logActivityId: string,
+      data: UpdateLogActivityRequest,
+    ) => mutate({ taxFirmId, logActivityId, data }),
+    isPending,
+    error: error
+      ? getApiErrorMessage(error, "Failed to update activity")
+      : null,
+  };
+};

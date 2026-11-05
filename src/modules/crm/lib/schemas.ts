@@ -239,13 +239,17 @@ export const editTaxClientSchema = createTaxClientSchema.pick({
 export type EditTaxClientFormData = z.infer<typeof editTaxClientSchema>;
 
 export const uploadDocumentsSchema = z.object({
-  taxPersonClientId: z.string().min(1, "Client is required"),
+  taxPersonClientId: z
+    .string({ error: "Tax client is required" })
+    .min(1, "Tax client is required"),
   taxYear: z
-    .number()
+    .number({ error: "Tax year is required" })
     .int()
     .min(1900, "Invalid tax year")
     .max(new Date().getFullYear() + 1, "Tax year cannot be in the future"),
-  formType: z.string().min(1, "Document type is required"),
+  formType: z
+    .string({ error: "Document type is required" })
+    .min(1, "Document type is required"),
 });
 
 export const updateTaxFirmSchema = createTaxFirmSchema;
@@ -262,12 +266,72 @@ export const getTaxFirmSchema = createTaxFirmSchema.extend({
 });
 
 // ============================================================================
+// Log Activity Schemas
+// ============================================================================
+
+export const createLogActivitySchema = z.object({
+  firmId: z.string({ error: "Firm is required" }).min(1, "Firm is required"),
+  contactId: z.string().optional().nullable(),
+  activityDate: z
+    .string({ message: "Activity date is required" })
+    .min(1, "Activity date is required"),
+  activityTime: z
+    .string({ message: "Activity time is required" })
+    .min(1, "Activity time is required"),
+  activityTypeId: z
+    .number({ error: "Activity type is required" })
+    .int("Activity type is required"),
+  summary: z
+    .string({ error: "Summary is required" })
+    .min(1, "Summary is required")
+    .max(500, "Summary cannot exceed 500 characters"),
+  outcome: z
+    .string()
+    .max(500, "Outcome cannot exceed 500 characters")
+    .optional()
+    .nullable(),
+  nextFollowUpDate: z.string().optional().nullable(),
+  nextFollowUpTime: z.string().optional().nullable(),
+  loggedBy: z
+    .string({ error: "Logged by is required" })
+    .min(1, "Logged by is required"),
+});
+
+export const updateLogActivitySchema = z.object({
+  firmId: z.string().optional().nullable(),
+  contactId: z.string().optional().nullable(),
+  activityDate: z
+    .string({ message: "Activity date is required" })
+    .min(1, "Activity date is required"),
+  activityTime: z
+    .string({ message: "Activity time is required" })
+    .min(1, "Activity time is required"),
+  activityTypeId: z
+    .number({ error: "Activity type is required" })
+    .int("Activity type is required"),
+  summary: z
+    .string({ error: "Summary is required" })
+    .min(1, "Summary is required")
+    .max(500, "Summary cannot exceed 500 characters"),
+  outcome: z
+    .string()
+    .max(500, "Outcome cannot exceed 500 characters")
+    .optional()
+    .nullable(),
+  nextFollowUpDate: z.string().optional().nullable(),
+  nextFollowUpTime: z.string().optional().nullable(),
+  loggedBy: z.string().optional().nullable(),
+});
+
+// ============================================================================
 // Form Data Types (inferred from schemas)
 // ============================================================================
 
 export type CreateTaxFirmFormData = z.infer<typeof createTaxFirmSchema>;
 export type CreateContactFormData = z.infer<typeof createContactSchema>;
 export type CreateTaxClientFormData = z.infer<typeof createTaxClientSchema>;
+export type CreateLogActivityFormData = z.infer<typeof createLogActivitySchema>;
+export type UpdateLogActivityFormData = z.infer<typeof updateLogActivitySchema>;
 export type UpdateTaxFirmFormData = z.infer<typeof updateTaxFirmSchema>;
 export type GetTaxFirmData = z.infer<typeof getTaxFirmSchema>;
 export type UploadDocumentsFormData = z.infer<typeof uploadDocumentsSchema>;

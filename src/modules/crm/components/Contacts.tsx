@@ -71,6 +71,7 @@ export const Contacts = () => {
   });
   const { deleteContact, isPending: isDeleting } = useDeleteContact({
     onSuccess: () => setDeletingContact(null),
+    onError: () => setDeletingContact(null),
   });
   const {
     contactTypes,
@@ -84,6 +85,7 @@ export const Contacts = () => {
     reset,
     control: editControl,
     formState: { errors: editErrors, isDirty },
+    clearErrors,
   } = useForm<EditContactFormData>({
     resolver: zodResolver(editContactSchema),
     mode: "onChange",
@@ -137,6 +139,7 @@ export const Contacts = () => {
       "this contact",
   });
   const openEditDialog = (contact: GetTaxFirmContactByTaxFirmIdResponse) => {
+    clearErrors();
     reset({
       firstName: contact.firstName ?? "",
       lastName: contact.lastName ?? "",
@@ -379,7 +382,10 @@ export const Contacts = () => {
       <Dialog
         open={Boolean(editingContact)}
         onOpenChange={(open) => {
-          if (!open && !isUpdating) setEditingContact(null);
+          if (!open && !isUpdating) {
+            setEditingContact(null);
+            reset();
+          }
         }}
       >
         <DialogContent

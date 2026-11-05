@@ -4,6 +4,12 @@
  * K2 Tax API
  * OpenAPI spec version: v1
  */
+export interface ActivityTypeResponse {
+  activityTypeId?: number;
+  /** @nullable */
+  name?: string | null;
+}
+
 export interface ContactMethodTypeResponse {
   contactMethodTypeId?: number;
   /** @nullable */
@@ -794,6 +800,8 @@ export interface LookupResponse {
   roleTitleTypes?: RoleTitleTypeResponse[] | null;
   /** @nullable */
   preferredContactMethodTypes?: PreferredContactMethodTypeResponse[] | null;
+  /** @nullable */
+  activityTypes?: ActivityTypeResponse[] | null;
 }
 
 export interface LookupResponseErrorOr {
