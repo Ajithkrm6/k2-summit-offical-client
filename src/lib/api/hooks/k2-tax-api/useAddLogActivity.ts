@@ -2,8 +2,8 @@ import { toast } from "@/components/ui/toast";
 import {
   getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey,
   usePostApiV1TaxFirmTaxfirmidLogActivity,
-  type CreateLogActivityRequest,
 } from "@/lib/api/generated/k2-tax-api";
+import type { CreateLogActivityRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "../../error-message";
 import type { AxiosError } from "axios";
