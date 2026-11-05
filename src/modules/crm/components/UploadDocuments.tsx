@@ -25,6 +25,7 @@ import {
 } from "@/modules/crm/lib";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -180,6 +181,12 @@ export const UploadDocuments = () => {
 
   return (
     <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
+      <Link
+        href="/crm/documentsCentral"
+        className="inline-block text-sm text-primary underline-offset-4 hover:underline"
+      >
+        Back to Documents Central
+      </Link>
       <h1 className="text-2xl font-bold">Documents Central</h1>
       <p>
         Track everyday documents requested for a client&apos;s tax year. Open a

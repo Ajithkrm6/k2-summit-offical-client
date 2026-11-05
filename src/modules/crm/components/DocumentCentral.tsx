@@ -71,12 +71,17 @@ export const DocumentsCentral = () => {
           .join(" ") || "Unknown",
     }));
 
-  // Set first client on firm change
+  // Set first client on firm change or reset if no clients available
   useEffect(() => {
-    if (clientOptions.length > 0 && !selectedClientId) {
+    if (clientOptions.length > 0) {
       const firstClientId = clientOptions[0]?.id;
-      if (firstClientId) {
+      if (firstClientId && selectedClientId !== firstClientId) {
         setValue("clientId", firstClientId);
+      }
+    } else {
+      // Reset client when no clients available
+      if (selectedClientId) {
+        setValue("clientId", "");
       }
     }
   }, [clientOptions, selectedClientId, setValue]);
@@ -218,7 +223,13 @@ export const DocumentsCentral = () => {
             name="clientId"
             control={control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select
+                value={field.value}
+                onValueChange={(value) => {
+                  setDownloadError(null);
+                  field.onChange(value);
+                }}
+              >
                 <SelectTrigger id="clientSelect" className="w-full">
                   <SelectValue placeholder="Select a tax client">
                     {field.value
