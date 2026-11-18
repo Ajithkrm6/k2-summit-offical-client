@@ -11,9 +11,10 @@
 
 import { toast } from "@/components/ui/toast";
 import apiClient from "@/lib/axios-config";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { getApiErrorMessage } from "../../error-message";
+import { getGetApiV1ClientClientIdDocumentsQueryKey } from "../../generated/k2-tax-api";
 import type {
   PostApiV1ClientDocumentsBody,
   UploadClientDocumentsResult,
@@ -27,6 +28,7 @@ import type {
  * - Returns mutation state directly (no Zustand dependency)
  */
 export const useUploadDocuments = () => {
+  const queryClient = useQueryClient();
   const { mutate, isPending, isSuccess, error } = useMutation({
     mutationFn: async (data: PostApiV1ClientDocumentsBody) => {
       // Build FormData for multipart upload
@@ -48,11 +50,19 @@ export const useUploadDocuments = () => {
 
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       toast.add({
         title: "Documents uploaded successfully",
         description: `${data?.uploadedDocuments?.length || 0} file(s) uploaded`,
         type: "success",
+      });
+
+      // Refresh the client's document list; useGetDocuments keeps polling
+      // until extraction finishes.
+      void queryClient.invalidateQueries({
+        queryKey: getGetApiV1ClientClientIdDocumentsQueryKey(
+          variables.TaxPersonClientId,
+        ),
       });
     },
     onError: (err: AxiosError) => {

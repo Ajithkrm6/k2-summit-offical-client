@@ -1,12 +1,13 @@
 import { toast } from "@/components/ui/toast";
 import {
   getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey,
+  getGetApiV1TaxFirmTaxFirmIdQueryKey,
   usePatchApiV1TaxFirmTaxFirmIdLogActivityLogActivityId,
 } from "@/lib/api/generated/k2-tax-api";
 import type { UpdateLogActivityRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import { useQueryClient } from "@tanstack/react-query";
-import { getApiErrorMessage } from "../../error-message";
 import type { AxiosError } from "axios";
+import { getApiErrorMessage } from "../../error-message";
 
 interface UseUpdateLogActivityOptions {
   taxFirmId: string;
@@ -25,6 +26,9 @@ export const useUpdateLogActivity = ({
           await queryClient.invalidateQueries({
             queryKey:
               getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey(taxFirmId),
+          });
+          await queryClient.invalidateQueries({
+            queryKey: getGetApiV1TaxFirmTaxFirmIdQueryKey(taxFirmId),
           });
           toast.add({
             title: "Activity updated successfully",

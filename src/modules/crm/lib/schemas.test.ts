@@ -139,6 +139,7 @@ describe("createTaxFirmSchema", () => {
     firmName: "Example Firm",
     firmTypeId: 1,
     leadStatusTypeId: 1,
+    mainPhoneNumber: "+15551234567",
   };
 
   it.each([undefined, null, "", "   "])(
@@ -162,7 +163,10 @@ describe("createTaxFirmSchema", () => {
   });
 
   it("reports missing firm type and lead status", () => {
-    const result = createTaxFirmSchema.safeParse({ firmName: "Example Firm" });
+    const result = createTaxFirmSchema.safeParse({
+      firmName: "Example Firm",
+      mainPhoneNumber: requiredFields.mainPhoneNumber,
+    });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.flatten().fieldErrors).toEqual({
@@ -184,6 +188,46 @@ describe("createTaxFirmSchema", () => {
     );
     expect(result.errors.firmName?.message).toBe("Firm name is required");
     expect(result.values).toEqual({});
+  });
+
+  it.each([undefined, null, "", "   ", "+1", "+1555"])(
+    "rejects a missing, blank, or incomplete main phone number: %j",
+    (mainPhoneNumber) => {
+      const result = createTaxFirmSchema.safeParse({
+        ...requiredFields,
+        mainPhoneNumber,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some(
+            (issue) => issue.path[0] === "mainPhoneNumber",
+          ),
+        ).toBe(true);
+      }
+    },
+  );
+
+  it("populates the main phone error on an empty form submission", async () => {
+    const resolve = zodResolver(createTaxFirmSchema);
+    const result = await resolve(
+      { ...requiredFields, firmName: "", mainPhoneNumber: "" },
+      undefined,
+      { fields: {}, shouldUseNativeValidation: false },
+    );
+    expect(result.errors.mainPhoneNumber?.message).toBe(
+      "Main phone number is required",
+    );
+    expect(result.values).toEqual({});
+  });
+
+  it("keeps contact phone numbers optional", () => {
+    expect(createContactSchema.shape.phoneNumber.safeParse("").success).toBe(
+      true,
+    );
+    expect(createContactSchema.shape.cellPhone.safeParse("").success).toBe(
+      true,
+    );
   });
 });
 
@@ -334,7 +378,9 @@ describe("createTaxClientSchema", () => {
       "accepts strict +1 numbers for %s",
       (_name, schema) => {
         expect(schema.safeParse("+15551234567").success).toBe(true);
-        expect(schema.safeParse("").success).toBe(true);
+        expect(schema.safeParse("").success).toBe(
+          _name !== "tax-firm phone" && _name !== "edit tax-firm phone",
+        );
       },
     );
 
@@ -367,7 +413,6 @@ describe("createTaxClientSchema", () => {
       for (const schema of [
         createContactSchema.shape.phoneNumber,
         createContactSchema.shape.cellPhone,
-        createTaxFirmSchema.shape.mainPhoneNumber,
       ]) {
         expect(schema.safeParse(null).success).toBe(true);
         expect(schema.safeParse(undefined).success).toBe(true);

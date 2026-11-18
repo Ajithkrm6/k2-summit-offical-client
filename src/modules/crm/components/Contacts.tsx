@@ -2,8 +2,6 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -13,6 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -22,12 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import type { GetTaxFirmContactByTaxFirmIdResponse } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { useDeleteContact } from "@/lib/api/hooks/k2-tax-api/useDeleteContact";
 import { useGetContacts } from "@/lib/api/hooks/k2-tax-api/useGetContacts";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
-import { useUpdateContact } from "@/lib/api/hooks/k2-tax-api/useUpdateContact";
-import { useDeleteContact } from "@/lib/api/hooks/k2-tax-api/useDeleteContact";
 import { useLookupData } from "@/lib/api/hooks/k2-tax-api/useLookupData";
-import type { GetTaxFirmContactByTaxFirmIdResponse } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
+import { useUpdateContact } from "@/lib/api/hooks/k2-tax-api/useUpdateContact";
 import {
   editContactSchema,
   getRoleTitleLabel,
@@ -46,8 +47,7 @@ interface SelectedContact {
 }
 
 const editFields: {
-  name:
-    "firstName" | "lastName" | "phoneNumber" | "cellPhone" | "email" | "notes";
+  name: "firstName" | "lastName" | "phoneNumber" | "cellPhone" | "email";
   label: string;
   required?: boolean;
   type?: "text" | "tel" | "email";
@@ -57,7 +57,6 @@ const editFields: {
   { name: "phoneNumber", label: "Phone", type: "tel" },
   { name: "cellPhone", label: "Cell phone", type: "tel" },
   { name: "email", label: "Email", type: "email" },
-  { name: "notes", label: "Notes" },
 ];
 
 export const Contacts = () => {
@@ -68,6 +67,7 @@ export const Contacts = () => {
     useState<SelectedContact | null>(null);
   const { updateContact, isPending: isUpdating } = useUpdateContact({
     onSuccess: () => setEditingContact(null),
+    onError: () => setEditingContact(null),
   });
   const { deleteContact, isPending: isDeleting } = useDeleteContact({
     onSuccess: () => setDeletingContact(null),
@@ -95,6 +95,7 @@ export const Contacts = () => {
       phoneNumber: "",
       cellPhone: "",
       email: "",
+      bestTimeToReach: "",
       notes: "",
       isPrimaryContact: false,
     },
@@ -146,6 +147,7 @@ export const Contacts = () => {
       phoneNumber: contact.phoneNumber ?? "",
       cellPhone: contact.cellPhone ?? "",
       email: contact.email ?? "",
+      bestTimeToReach: "",
       notes: contact.notes ?? "",
       roleTitleTypeId: contact.roleTitleTypeId,
       preferredContactMethodTypeId:
@@ -164,6 +166,7 @@ export const Contacts = () => {
       phoneNumber: data.phoneNumber || null,
       cellPhone: data.cellPhone || null,
       email: data.email || null,
+      bestTimeToReach: data.bestTimeToReach || null,
       notes: data.notes || null,
       isPrimaryContact: data.isPrimaryContact ?? false,
     });
@@ -279,7 +282,7 @@ export const Contacts = () => {
               <tr>
                 {[
                   "Name",
-                  "Firm",
+                  // "Firm",
                   "Role",
                   "Email",
                   "Phone",
@@ -323,9 +326,9 @@ export const Contacts = () => {
                         .filter(Boolean)
                         .join(" ") || "Not provided"}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    {/* <td className="px-4 py-3 text-center">
                       {selectedFirmName || selectedFirmId}
-                    </td>
+                    </td> */}
                     <td className="px-4 py-3 text-center">
                       {getRoleTitleLabel(contact.roleTitleTypeId)}
                     </td>
@@ -545,20 +548,56 @@ export const Contacts = () => {
                     </div>
                   );
                 })}
-                <div className="flex items-center gap-2">
-                  <Controller
-                    name="isPrimaryContact"
-                    control={editControl}
-                    render={({ field }) => (
-                      <Checkbox
-                        id="editContact-primary"
-                        checked={field.value ?? false}
-                        onCheckedChange={field.onChange}
-                        disabled={isUpdating}
-                      />
-                    )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Best Time To Reach</Label>
+                    <Input
+                      {...register("bestTimeToReach")}
+                      id="editContact-bestTime"
+                      type="text"
+                      maxLength={500}
+                      disabled={isUpdating}
+                      placeholder="10Am-11Am"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {" "}
+                    <Controller
+                      name="isPrimaryContact"
+                      control={editControl}
+                      render={({ field }) => (
+                        <Checkbox
+                          id="editContact-primary"
+                          checked={field.value ?? false}
+                          onCheckedChange={field.onChange}
+                          disabled={isUpdating}
+                        />
+                      )}
+                    />
+                    <Label htmlFor="editContact-primary">Primary contact</Label>
+                  </div>
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="editContact-notes">Notes</Label>
+                  <Textarea
+                    {...register("notes")}
+                    id="editContact-notes"
+                    rows={3}
+                    aria-invalid={Boolean(editErrors.notes)}
+                    aria-describedby={
+                      editErrors.notes ? "editContact-notes-error" : undefined
+                    }
                   />
-                  <Label htmlFor="editContact-primary">Primary contact</Label>
+                  {editErrors.notes && (
+                    <p
+                      id="editContact-notes-error"
+                      role="alert"
+                      className="text-sm text-red-500"
+                    >
+                      {editErrors.notes.message}
+                    </p>
+                  )}
                 </div>
               </fieldset>
               <DialogFooter>

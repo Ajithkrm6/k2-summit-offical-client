@@ -12,10 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetDocuments } from "@/lib/api/hooks/k2-tax-api/useGetDocuments";
+import {
+  isExtractionPending,
+  isReportGenerated,
+  useGetDocuments,
+} from "@/lib/api/hooks/k2-tax-api/useGetDocuments";
 import { useGetTaxClients } from "@/lib/api/hooks/k2-tax-api/useGetTaxClients";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -93,48 +97,68 @@ export const DocumentsCentral = () => {
     error: documentsError,
   } = useGetDocuments(selectedClientId);
 
-  const handleDownload = async (
+  const handleDownload = (
     storageUri: string | null | undefined,
     fileName?: string | null,
   ) => {
     if (!storageUri) return;
-
-    setDownloadError(null);
-
-    try {
-      // Fetch the file from the storage URI
-      const response = await fetch(storageUri);
-      if (!response.ok) {
-        throw new Error(
-          "Storage access denied. The file may require authentication or be unavailable.",
-        );
-      }
-
-      // Get the file as a blob
-      const blob = await response.blob();
-
-      // Create a blob URL
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      // Create an anchor element and trigger download
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName || "document"; // Use provided filename or default
-      link.style.display = "none";
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up the blob URL
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : "Failed to download file";
-      setDownloadError(errorMsg);
-      console.error("Download error:", error);
-    }
+    const link = document.createElement("a");
+    link.href = storageUri;
+    link.download = fileName || "document";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
+
+  // const handleDownload = async (
+  //   storageUri: string | null | undefined,
+  //   fileName?: string | null
+  // ) => {
+  //   if (!storageUri) return;
+
+  //   setDownloadError(null);
+
+  //   try {
+  //     // Fetch the file through the backend which will handle proper Content-Disposition
+  //     const response = await fetch(storageUri);
+
+  //     if (!response.ok) {
+  //       throw new Error(
+  //         `Failed to fetch file: ${response.status} ${response.statusText}`
+  //       );
+  //     }
+
+  //     // Convert response to blob
+  //     const blob = await response.blob();
+
+  //     if (blob.size === 0) {
+  //       throw new Error("Downloaded file is empty");
+  //     }
+
+  //     // Create a blob URL for download
+  //     const blobUrl = window.URL.createObjectURL(blob);
+
+  //     // Create anchor and trigger download
+  //     const link = document.createElement("a");
+  //     link.href = blobUrl;
+  //     link.download = fileName || "document";
+  //     link.style.display = "none";
+
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+
+  //     // Clean up blob URL
+  //     setTimeout(() => {
+  //       window.URL.revokeObjectURL(blobUrl);
+  //     }, 100);
+  //   } catch (error) {
+  //     const errorMsg =
+  //       error instanceof Error ? error.message : "Failed to download file";
+  //     setDownloadError(errorMsg);
+  //     console.error("Download error:", error);
+  //   }
+  // };
 
   return (
     <div className="container min-h-screen space-y-6 rounded-lg bg-white p-4">
@@ -232,10 +256,12 @@ export const DocumentsCentral = () => {
               >
                 <SelectTrigger id="clientSelect" className="w-full">
                   <SelectValue placeholder="Select a tax client">
-                    {field.value
+                    {field.value && !clientsLoading
                       ? clientOptions.find((c) => c.id === field.value)?.name ||
-                        field.value
-                      : "Select a tax client"}
+                        "Select a tax client"
+                      : clientsLoading
+                        ? "Loading clients..."
+                        : "Select a tax client"}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -304,7 +330,7 @@ export const DocumentsCentral = () => {
                   "Form Code",
                   "Status",
                   "Upload Date",
-                  "Actions",
+                  "Report",
                 ].map((heading) => (
                   <th
                     key={heading}
@@ -352,19 +378,25 @@ export const DocumentsCentral = () => {
                       {doc.primaryFormCode || "Not provided"}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          doc.extractionStatus === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : doc.extractionStatus === "processing"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : doc.extractionStatus === "failed"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {doc.extractionStatus || "Unknown"}
-                      </span>
+                      {isExtractionPending(doc.extractionStatus) ? (
+                        <span
+                          role="status"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800"
+                        >
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Processing...
+                        </span>
+                      ) : (
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                            isReportGenerated(doc.extractionStatus)
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {doc.extractionStatus}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       {doc.uploadedAt
@@ -377,8 +409,12 @@ export const DocumentsCentral = () => {
                         size="sm"
                         className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         aria-label="Download document"
+                        disabled={!isReportGenerated(doc.extractionStatus)}
                         onClick={() =>
-                          handleDownload(doc.storageUri, doc.fileName)
+                          handleDownload(
+                            doc.taxStrategy?.taxStrategyUrl,
+                            doc.fileName,
+                          )
                         }
                       >
                         <Download className="w-4 h-4" />

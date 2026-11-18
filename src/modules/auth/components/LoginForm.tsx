@@ -79,6 +79,7 @@ export const LoginForm: React.FC = () => {
               placeholder="••••••••"
               {...register("password")}
               disabled={isPending}
+              showPasswordToggle
             />
             {errors.password && (
               <p className="text-xs text-destructive">

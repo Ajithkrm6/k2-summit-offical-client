@@ -1,17 +1,20 @@
 import { toast } from "@/components/ui/toast";
 import {
+  getGetApiV1TaxFirmTaxFirmIdQueryKey,
   getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey,
   getGetApiV1UserTaxFirmsQueryKey,
   usePostApiV1TaxFirmTaxfirmidTaxPersonClient,
 } from "@/lib/api/generated/k2-tax-api";
-import { useQueryClient } from "@tanstack/react-query";
 import type { CreateTaxPersonClientRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import type { CreateTaxClientFormData } from "@/modules/crm/lib";
+import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { getApiErrorMessage } from "../../error-message";
 
 interface UseAddTaxClientProps {
   onSuccess?: () => void;
+  /** Called for both API-level errors (isError) and network/HTTP errors. */
+  onError?: () => void;
 }
 
 /**
@@ -22,7 +25,10 @@ interface UseAddTaxClientProps {
  * - Manages loading and error states via TanStack Query
  * - Provides toast notifications for user feedback
  */
-export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
+export const useAddTaxClient = ({
+  onSuccess,
+  onError,
+}: UseAddTaxClientProps = {}) => {
   const queryClient = useQueryClient();
   const { mutate, isPending, isSuccess, error } =
     usePostApiV1TaxFirmTaxfirmidTaxPersonClient({
@@ -36,6 +42,7 @@ export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
                 "The client could not be saved",
               type: "error",
             });
+            onError?.();
             return;
           }
           // Invalidate client list for this specific firm
@@ -47,6 +54,10 @@ export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
           // Invalidate parent firm list so summaries update (MEDIUM #2 fix)
           await queryClient.invalidateQueries({
             queryKey: getGetApiV1UserTaxFirmsQueryKey(),
+          });
+          // Refresh the firm detail page, which lists the firm's clients
+          await queryClient.invalidateQueries({
+            queryKey: getGetApiV1TaxFirmTaxFirmIdQueryKey(variables.taxfirmid),
           });
           toast.add({
             title: "Tax client added successfully",
@@ -62,6 +73,7 @@ export const useAddTaxClient = ({ onSuccess }: UseAddTaxClientProps = {}) => {
             type: "error",
           });
           console.error("Add tax client failed:", error);
+          onError?.();
         },
       },
     });

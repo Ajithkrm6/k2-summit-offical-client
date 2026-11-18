@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,7 @@ import {
   updateLogActivitySchema,
   type UpdateLogActivityFormData,
 } from "@/modules/crm/lib";
+import { getTodayDateString, getTodayOnly } from "@/utils/helperFunctions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Edit, Trash } from "lucide-react";
 import Link from "next/link";
@@ -76,18 +77,6 @@ const editFields: {
     required: true,
   },
   {
-    name: "summary",
-    label: "Summary",
-    type: "textarea",
-    required: true,
-  },
-  {
-    name: "outcome",
-    label: "Outcome",
-    type: "textarea",
-    required: false,
-  },
-  {
     name: "nextFollowUpDate",
     label: "Next Follow-up Date",
     type: "date",
@@ -99,6 +88,18 @@ const editFields: {
     type: "time",
     required: false,
   },
+  {
+    name: "summary",
+    label: "Summary",
+    type: "textarea",
+    required: true,
+  },
+  {
+    name: "outcome",
+    label: "Outcome",
+    type: "textarea",
+    required: false,
+  },
 ];
 
 export default function Activity() {
@@ -106,7 +107,7 @@ export default function Activity() {
     useState<SelectedActivity | null>(null);
   const [deletingActivity, setDeletingActivity] =
     useState<SelectedActivity | null>(null);
-
+  const { min, max } = getTodayOnly();
   // Form for firm selection
   const { control, setValue } = useForm({
     defaultValues: { firmId: "" },
@@ -292,9 +293,9 @@ export default function Activity() {
         </div>
         <Link
           href="/crm/activity/logActivity"
-          className={buttonVariants({ className: "self-start sm:self-auto" })}
+          // className={buttonVariants({ className: "self-start sm:self-auto" })}
         >
-          Add Activity
+          <Button size="lg">Add Activity</Button>
         </Link>
       </section>
 
@@ -483,7 +484,7 @@ export default function Activity() {
           }
         }}
       >
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto md:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Activity</DialogTitle>
             <DialogDescription>
@@ -492,9 +493,12 @@ export default function Activity() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onEditSubmit)} noValidate>
-            <div className="space-y-4  gap-4 overflow-y-auto pr-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {editFields.map((field) => (
-                <div key={field.name} className="space-y-2">
+                <div
+                  key={field.name}
+                  className={`min-w-0 space-y-2${field.type === "textarea" ? " md:col-span-2" : ""}`}
+                >
                   <Label htmlFor={`edit-${field.name}`}>
                     {field.label}
                     {field.required && (
@@ -529,7 +533,10 @@ export default function Activity() {
                               }
                               value={fieldProps.value?.toString() || ""}
                             >
-                              <SelectTrigger id={`edit-${field.name}`}>
+                              <SelectTrigger
+                                id={`edit-${field.name}`}
+                                className="w-full"
+                              >
                                 <SelectValue placeholder="Select activity type">
                                   {selectedItem?.activityTypeName}
                                 </SelectValue>
@@ -562,6 +569,10 @@ export default function Activity() {
                       id={`edit-${field.name}`}
                       type={field.type || "text"}
                       placeholder={`Enter ${field.label.toLowerCase()}`}
+                      {...(field.name === "activityDate" && getTodayOnly())}
+                      {...(field.name === "nextFollowUpDate" && {
+                        min: getTodayDateString(),
+                      })}
                     />
                   )}
 

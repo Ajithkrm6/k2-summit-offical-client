@@ -1,7 +1,7 @@
 "use client";
 
 import { FeatureToggleButton } from "@/components/shared/FeatureToggleButton";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
+// import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,51 @@ import { useLogout } from "@/lib/api/hooks/k2-tax-api/useAuth";
 import { useAuthStore } from "@/modules/auth/store/auth.store";
 import { Bell, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+
+// Most specific routes first; matched against the full pathname.
+const PAGE_TITLES: { pattern: RegExp; title: string }[] = [
+  { pattern: /^\/dashboard\/[^/]+$/, title: "Firm Details" },
+  { pattern: /^\/dashboard$/, title: "Dashboard" },
+  { pattern: /^\/crm\/taxFirm\/addTaxFirm$/, title: "Add Tax Firm" },
+  { pattern: /^\/crm\/taxFirm$/, title: "Tax Firms" },
+  { pattern: /^\/crm\/addContact\/new$/, title: "Add Contact" },
+  { pattern: /^\/crm\/addContact\/[^/]+\/[^/]+$/, title: "Contact Details" },
+  { pattern: /^\/crm\/addContact$/, title: "Contacts" },
+  { pattern: /^\/crm\/addTaxClient\/new$/, title: "Add Tax Client" },
+  { pattern: /^\/crm\/addTaxClient$/, title: "Tax Clients" },
+  { pattern: /^\/crm\/activity\/logActivity$/, title: "Log Activity" },
+  { pattern: /^\/crm\/activity$/, title: "Activity" },
+  {
+    pattern: /^\/crm\/documentsCentral\/addNewDocument$/,
+    title: "Upload Documents",
+  },
+  { pattern: /^\/crm\/documentsCentral$/, title: "Document Central" },
+  { pattern: /^\/comingsoon$/, title: "Coming Soon" },
+];
+
+// "addTaxClient" / "tax-firm" -> "Add Tax Client" / "Tax Firm"
+const humanize = (segment: string) =>
+  segment
+    .replace(/[-_]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim();
+
+export const getPageTitle = (pathname: string): string => {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  const match = PAGE_TITLES.find(({ pattern }) => pattern.test(path));
+  if (match) return match.title;
+
+  // Fallback for routes not listed above: use the last non-ID segment.
+  const lastSegment = path
+    .split("/")
+    .filter(Boolean)
+    .reverse()
+    .find((segment) => !/\d/.test(segment) && segment.length < 30);
+  return lastSegment ? humanize(lastSegment) : "Home";
+};
 
 /**
  * TopNav Component
@@ -37,9 +81,8 @@ export function TopNav(): React.ReactElement {
   // Authentication state
   const { user } = useAuthStore();
   const { logout, isPending } = useLogout();
-
+  const pageTitle = getPageTitle(usePathname());
   const [notificationCount] = useState(3);
-
   const handleLogout = useCallback(() => {
     logout();
   }, [logout]);
@@ -67,6 +110,7 @@ export function TopNav(): React.ReactElement {
         <div className="flex items-center gap-4 min-w-0 flex-1">
           {/* Mobile Menu Toggle - Using native shadcn SidebarTrigger */}
           <SidebarTrigger />
+          <h1 className="text-lg font-semibold truncate">{pageTitle}</h1>
         </div>
 
         {/* Right Section - Notifications & User Menu */}
@@ -89,7 +133,7 @@ export function TopNav(): React.ReactElement {
           <FeatureToggleButton />
 
           {/* Theme Toggle Button */}
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
 
           {/* User Menu Dropdown (Using shadcn DropdownMenu) */}
           <DropdownMenu>

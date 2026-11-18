@@ -16,6 +16,10 @@ vi.mock("@/lib/api/generated/k2-tax-api", () => ({
   getGetApiV1TaxFirmTaxFirmIdTaxFirmContactsQueryKey: (id: string) => [
     `/api/v1/TaxFirm/${id}/TaxFirmContacts`,
   ],
+  getGetApiV1UserTaxFirmsQueryKey: () => ["/api/v1/User/TaxFirms"],
+  getGetApiV1TaxFirmTaxFirmIdQueryKey: (id: string) => [
+    `/api/v1/TaxFirm/${id}`,
+  ],
 }));
 
 import { useAddContact } from "./useAddContact";
@@ -96,10 +100,29 @@ describe("useAddContact", () => {
       { data: {} },
       { taxfirmid: "firm-1" },
     );
-    expect(invalidateQueries).toHaveBeenCalledExactlyOnceWith({
+    expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ["/api/v1/TaxFirm/firm-1/TaxFirmContacts"],
     });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["/api/v1/User/TaxFirms"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["/api/v1/TaxFirm/firm-1"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledTimes(3);
     expect(onSuccess).toHaveBeenCalledOnce();
     expect(notify).toHaveBeenCalledOnce();
+  });
+
+  it("calls onError when the request fails", () => {
+    const onError = vi.fn();
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      useAddContact({ taxFirmId: "firm-1", onError });
+      mutation.mock.calls[0][0].mutation.onError({ message: "boom" });
+      expect(onError).toHaveBeenCalledOnce();
+    } finally {
+      log.mockRestore();
+    }
   });
 });

@@ -1,5 +1,6 @@
 import { toast } from "@/components/ui/toast";
 import {
+  getGetApiV1TaxFirmTaxFirmIdQueryKey,
   getGetApiV1TaxFirmTaxFirmIdTaxFirmContactsQueryKey,
   getGetApiV1UserTaxFirmsQueryKey,
   usePostApiV1TaxFirmTaxfirmidContact,
@@ -12,6 +13,7 @@ import { getApiErrorMessage } from "../../error-message";
 interface UseAddContactProps {
   taxFirmId: string;
   onSuccess?: () => void;
+  onError?: () => void;
 }
 
 /**
@@ -22,7 +24,11 @@ interface UseAddContactProps {
  * - Manages loading and error states via TanStack Query
  * - Provides toast notifications for user feedback
  */
-export const useAddContact = ({ taxFirmId, onSuccess }: UseAddContactProps) => {
+export const useAddContact = ({
+  taxFirmId,
+  onSuccess,
+  onError,
+}: UseAddContactProps) => {
   const queryClient = useQueryClient();
   const { mutate, isPending, isSuccess, error } =
     usePostApiV1TaxFirmTaxfirmidContact({
@@ -38,6 +44,10 @@ export const useAddContact = ({ taxFirmId, onSuccess }: UseAddContactProps) => {
           await queryClient.invalidateQueries({
             queryKey: getGetApiV1UserTaxFirmsQueryKey(),
           });
+          // Refresh the firm detail page, which lists the firm's contacts
+          await queryClient.invalidateQueries({
+            queryKey: getGetApiV1TaxFirmTaxFirmIdQueryKey(variables.taxfirmid),
+          });
           toast.add({
             title: "Contact added successfully",
             description: "The contact has been added to the firm",
@@ -52,6 +62,7 @@ export const useAddContact = ({ taxFirmId, onSuccess }: UseAddContactProps) => {
             type: "error",
           });
           console.error("Add contact failed:", error);
+          onError?.();
         },
       },
     });

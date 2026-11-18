@@ -2,7 +2,6 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { formatBytes, useFileUpload } from "@/hooks/use-file-upload";
 import { getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey } from "@/lib/api/generated/k2-tax-api";
 import type { PostApiV1ClientDocumentsBody } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import { useGetTaxClients } from "@/lib/api/hooks/k2-tax-api/useGetTaxClients";
@@ -26,8 +26,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
 export const UploadDocuments = () => {
   const queryClient = useQueryClient();
@@ -42,9 +44,26 @@ export const UploadDocuments = () => {
     isSuccess,
     error: uploadError,
   } = useUploadDocuments();
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedFirmId, setSelectedFirmId] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [
+    { files: uploadFiles, isDragging, errors: fileErrors },
+    {
+      removeFile,
+      clearFiles,
+      handleDragEnter,
+      handleDragLeave,
+      handleDragOver,
+      handleDrop,
+      openFileDialog,
+      getInputProps,
+    },
+  ] = useFileUpload({
+    accept: ".pdf,application/pdf",
+    maxSize: MAX_FILE_SIZE,
+    multiple: true,
+    disabled: isPending,
+  });
+  const selectedFiles = uploadFiles.map((f) => f.file);
 
   const {
     handleSubmit,
@@ -116,30 +135,23 @@ export const UploadDocuments = () => {
   const documentTypes = [
     { id: "1040", label: "Form 1040 - Individual Income Tax" },
     { id: "1065", label: "Form 1065 - Partnership Return" },
-    { id: "1120", label: "Form 1120 - Corporate Income Tax" },
+    // { id: "1120", label: "Form 1120 - Corporate Income Tax" },
     { id: "1120s", label: "Form 1120-S - S Corporation Return" },
   ];
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      const validFiles = files.filter((file) => {
-        if (
-          !file.type.includes("pdf") &&
-          !file.name.toLowerCase().endsWith(".pdf")
-        ) {
-          toast.add({
-            title: "Invalid file type",
-            description: `${file.name} is not a PDF. Only PDF files are supported.`,
-            type: "destructive",
-          });
-          return false;
-        }
-        return true;
-      });
-      setSelectedFiles(validFiles);
-    }
-  };
+  // Stop the browser from opening a file in the tab when it is dropped
+  // outside the drop zone.
+  useEffect(() => {
+    const preventFileOpen = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes("Files")) e.preventDefault();
+    };
+    window.addEventListener("dragover", preventFileOpen);
+    window.addEventListener("drop", preventFileOpen);
+    return () => {
+      window.removeEventListener("dragover", preventFileOpen);
+      window.removeEventListener("drop", preventFileOpen);
+    };
+  }, []);
 
   const onSubmit = async (data: UploadDocumentsFormData) => {
     if (selectedFiles.length === 0) {
@@ -171,13 +183,10 @@ export const UploadDocuments = () => {
           taxYear: new Date().getFullYear(),
           formType: "",
         });
-        setSelectedFiles([]);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
+        clearFiles();
       }, 0);
     }
-  }, [isSuccess, isPending, reset]);
+  }, [isSuccess, isPending, reset, clearFiles]);
 
   return (
     <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
@@ -412,7 +421,11 @@ export const UploadDocuments = () => {
 
         {/* File Upload Section */}
         <div
-          className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center space-y-4 ${isPending ? "opacity-50 pointer-events-none" : ""}`}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-lg p-8 text-center space-y-4 transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-gray-300"} ${isPending ? "opacity-50" : ""}`}
         >
           <div className="flex justify-center">
             <svg
@@ -438,44 +451,43 @@ export const UploadDocuments = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openFileDialog}
             disabled={isPending}
           >
             Browse Files
           </Button>
-          <Input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={onFileChange}
-            className="hidden"
-            accept=".pdf"
-            disabled={isPending}
-          />
+          <input {...getInputProps()} className="sr-only" tabIndex={-1} />
         </div>
 
+        {fileErrors.length > 0 && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {fileErrors.map((message) => (
+                <p key={message}>{message}</p>
+              ))}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Selected Files Display */}
-        {selectedFiles.length > 0 && (
+        {uploadFiles.length > 0 && (
           <div className="space-y-2">
-            <Label>Selected Files ({selectedFiles.length})</Label>
+            <Label>Selected Files ({uploadFiles.length})</Label>
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-              {selectedFiles.map((file, idx) => (
-                <div key={idx} className="flex items-center justify-between">
+              {uploadFiles.map(({ id, file }) => (
+                <div key={id} className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-sm">{file.name}</p>
                     <p className="text-xs text-gray-500">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                      {formatBytes(file.size)}
                     </p>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setSelectedFiles(
-                        selectedFiles.filter((_, i) => i !== idx),
-                      );
-                    }}
+                    disabled={isPending}
+                    onClick={() => removeFile(id)}
                   >
                     Remove
                   </Button>

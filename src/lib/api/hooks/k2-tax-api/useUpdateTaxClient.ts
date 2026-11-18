@@ -1,5 +1,6 @@
 import { toast } from "@/components/ui/toast";
 import {
+  getGetApiV1TaxFirmTaxFirmIdQueryKey,
   getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey,
   getGetApiV1UserTaxFirmsQueryKey,
   usePatchApiV1TaxFirmTaxFirmIdClientClientId,
@@ -32,6 +33,9 @@ export const useUpdateTaxClient = ({
           }),
           queryClient.invalidateQueries({
             queryKey: getGetApiV1UserTaxFirmsQueryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: getGetApiV1TaxFirmTaxFirmIdQueryKey(variables.taxFirmId),
           }),
         ]);
         toast.add({

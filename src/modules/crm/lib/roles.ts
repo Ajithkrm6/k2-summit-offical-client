@@ -1,13 +1,13 @@
 export enum RoleTitleType {
-  SALES_REPRESENTATIVE = 1,
-  ADMIN = 2,
-  SUPER_ADMIN = 3,
+  OWNER = 1,
+  PARTNER = 2,
+  CPA = 3,
 }
 
 export const ROLE_TITLE_LABELS: Record<RoleTitleType, string> = {
-  [RoleTitleType.SALES_REPRESENTATIVE]: "Sales Representative",
-  [RoleTitleType.ADMIN]: "Admin",
-  [RoleTitleType.SUPER_ADMIN]: "Super Admin",
+  [RoleTitleType.OWNER]: "Owner",
+  [RoleTitleType.PARTNER]: "Partner",
+  [RoleTitleType.CPA]: "CPA",
 };
 
 export const ROLE_TITLE_OPTIONS = (

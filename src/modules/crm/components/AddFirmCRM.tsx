@@ -18,6 +18,7 @@ import { useAddTaxFirm } from "@/lib/api/hooks/k2-tax-api/useAddTaxFirm";
 import { useLookupData } from "@/lib/api/hooks/k2-tax-api/useLookupData";
 import { CreateTaxFirmFormData, createTaxFirmSchema } from "@/modules/crm/lib";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -87,16 +88,14 @@ export const AddFirmCRM = () => {
     }
   }, [isSuccess, isPending, reset]);
 
-  const items = [
-    { label: "Select a firm type", value: null },
-    { label: "firm type 1", value: "apple", id: 1 },
-    { label: "firm type 2", value: "banana", id: 2 },
-    { label: "firm type 3", value: "blueberry", id: 3 },
-    { label: "firm type 4", value: "grapes", id: 4 },
-    { label: "firm type 5", value: "pineapple", id: 5 },
-  ];
   return (
     <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
+      <Link
+        href="/crm/taxFirm"
+        className="inline-block text-sm text-primary underline-offset-4 hover:underline"
+      >
+        Back to Tax Firms
+      </Link>
       <h1 id="contacts-heading" className="text-2xl font-bold">
         Enter a new Tax Firm
       </h1>
@@ -119,14 +118,14 @@ export const AddFirmCRM = () => {
       )}
 
       {/* form */}
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
             <div className="space-y-2">
               <Label htmlFor="firmName">
                 Firm Name<span className="text-red-500">*</span>
               </Label>
-              <Input {...register("firmName")} id="firmName" lettersOnly />
+              <Input {...register("firmName")} id="firmName" alphanumericOnly />
               {errors.firmName && (
                 <p className="text-red-500">{errors.firmName.message}</p>
               )}
@@ -328,9 +327,20 @@ export const AddFirmCRM = () => {
                 id="mainPhoneNumber"
                 type="tel"
                 placeholder="+15551234567"
+                // aria-required="true"
+                // aria-invalid={Boolean(errors.mainPhoneNumber)}
+                // aria-describedby={
+                //   errors.mainPhoneNumber ? "mainPhoneNumber-error" : undefined
+                // }
               />
               {errors.mainPhoneNumber && (
-                <p className="text-red-500">{errors.mainPhoneNumber.message}</p>
+                <p
+                  id="mainPhoneNumber-error"
+                  role="alert"
+                  className="text-red-500"
+                >
+                  {errors.mainPhoneNumber.message}
+                </p>
               )}
             </div>
           </div>
@@ -409,32 +419,10 @@ export const AddFirmCRM = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="leadSource">Lead Source</Label>
-              <Controller
-                name="leadSource"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Lead Sources</SelectLabel>
-                        {items.map((item) => (
-                          <SelectItem
-                            key={item.id || item.value}
-                            value={item.value || ""}
-                          >
-                            {item.label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
+              <Input
+                {...register("leadSource")}
+                id="leadSource"
+                maxLength={500}
               />
               {errors.leadSource && (
                 <p className="text-red-500">{errors.leadSource.message}</p>

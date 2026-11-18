@@ -106,8 +106,8 @@ const NAV_ITEMS: NavItem[] = [
     submenu: [
       {
         icon: <UserRoundGroup className="w-5 h-5" />,
-        label: "New Tax Firm ",
-        href: "/crm/addTaxFirm",
+        label: "Tax Firm ",
+        href: "/crm/taxFirm",
         featureGate: "crm.addTaxFirm",
         badgeVariant: "beta-s1",
       },
@@ -126,7 +126,7 @@ const NAV_ITEMS: NavItem[] = [
       },
       {
         icon: <Activity className="w-5 h-5" />,
-        label: "Activity",
+        label: "Log Activity",
         href: "/crm/activity",
         featureGate: "workpool.intake",
         badgeVariant: "beta-s1",
@@ -402,7 +402,7 @@ export function NavigationSidebar() {
                     onClick={() => toggleExpanded(item.label)}
                     className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer transition-colors"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       {item.icon && <>{item.icon}</>}
                       <span>{item.label}</span>
                     </div>
@@ -436,7 +436,7 @@ export function NavigationSidebar() {
                             onClick={() => setOpenMobile(false)}
                           >
                             <div className="flex items-center justify-between w-full">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center justify-center gap-2">
                                 {subitem.icon && <>{subitem.icon}</>}
                                 <span>{subitem.label}</span>
                               </div>

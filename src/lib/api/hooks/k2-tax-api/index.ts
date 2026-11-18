@@ -16,6 +16,7 @@ export { useUploadDocuments } from "./useUploadDocuments";
 export type * as UploadDocumentsTypes from "./useUploadDocuments";
 export { useGetDocuments } from "./useGetDocuments";
 export type * as GetDocumentsTypes from "./useGetDocuments";
+export { useGetFirmById } from "./useGetFirmById";
 export type * as UsersTypes from "./useUsers";
 export { useGetTaxFirms } from "./useGetTaxFirms";
 export { useGetTaxClients } from "./useGetTaxClients";

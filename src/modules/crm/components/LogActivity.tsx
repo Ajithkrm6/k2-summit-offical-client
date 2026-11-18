@@ -21,7 +21,9 @@ import {
   CreateLogActivityFormData,
   createLogActivitySchema,
 } from "@/modules/crm/lib";
+import { getTodayDateString, getTodayOnly } from "@/utils/helperFunctions";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -30,6 +32,7 @@ export const LogActivity = () => {
   const router = useRouter();
   const { taxFirms, isLoading: firmsLoading } = useGetTaxFirms();
   const { activityTypes } = useLookupData();
+  const { min, max } = getTodayOnly();
 
   const firmOptions =
     taxFirms.map((firm) => ({
@@ -48,6 +51,7 @@ export const LogActivity = () => {
     register,
     reset,
     formState: { errors },
+    watch,
   } = useForm<CreateLogActivityFormData>({
     resolver: zodResolver(createLogActivitySchema),
     mode: "onChange",
@@ -244,6 +248,8 @@ export const LogActivity = () => {
               </Label>
               <Input
                 {...register("activityDate")}
+                min={min}
+                max={max}
                 id="activityDate"
                 type="date"
                 disabled={!selectedFirmId}
@@ -262,6 +268,7 @@ export const LogActivity = () => {
               <Input
                 {...register("activityTime")}
                 id="activityTime"
+
                 type="time"
                 disabled={!selectedFirmId}
               />
@@ -369,6 +376,7 @@ export const LogActivity = () => {
                 {...register("nextFollowUpDate")}
                 id="nextFollowUpDate"
                 type="date"
+                min={getTodayDateString()}
                 disabled={!selectedFirmId}
               />
               {errors.nextFollowUpDate && (

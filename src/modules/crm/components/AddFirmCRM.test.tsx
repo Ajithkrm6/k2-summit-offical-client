@@ -34,6 +34,10 @@ vi.mock(
   async () => import("../../../components/ui/label"),
 );
 vi.mock(
+  "@/components/ui/textarea",
+  async () => import("../../../components/ui/textarea"),
+);
+vi.mock(
   "@/components/ui/checkbox",
   async () => import("../../../components/ui/checkbox"),
 );
@@ -76,6 +80,14 @@ describe("AddFirmCRM lookup options", () => {
     expect(markup).not.toContain("Missing ID");
     expect(markup).toContain("Lead Status");
     expect(markup).not.toContain("Load Status");
+  });
+
+  it("uses form validation and marks the main phone number as required", () => {
+    const markup = renderToStaticMarkup(createElement(AddFirmCRM));
+    expect(markup).toContain('noValidate=""');
+    expect(markup).toMatch(
+      /<input[^>]*id="mainPhoneNumber"[^>]*aria-required="true"/,
+    );
   });
 
   it("shows loading states for lookup fields", () => {

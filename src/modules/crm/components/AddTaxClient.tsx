@@ -106,6 +106,27 @@ export const AddTaxClient = () => {
     { value: "qualifying_widow", label: "Qualifying Widow(er)" },
   ];
 
+  // Helper functions to get label from value
+  const getClientStatusLabel = (value: string): string => {
+    return (
+      clientStatusOptions.find((opt) => opt.value === value)?.label || value
+    );
+  };
+
+  const getFilingStatusLabel = (value: string): string => {
+    return (
+      filingStatusOptions.find((opt) => opt.value === value)?.label || value
+    );
+  };
+
+  const getContactMethodLabel = (value: string): string => {
+    if (!value) return "";
+    const item = contactMethodTypes.find(
+      (t) => String(t.contactMethodTypeId) === value,
+    );
+    return item?.contactMethodTypeName || value;
+  };
+
   return (
     <div className="p-6 container  min-h-screen bg-white">
       <Link
@@ -237,7 +258,11 @@ export const AddTaxClient = () => {
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select status..." />
+                      <SelectValue placeholder="Select status...">
+                        {field.value
+                          ? getClientStatusLabel(field.value)
+                          : "Select status..."}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -268,7 +293,7 @@ export const AddTaxClient = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="taxpayerFirstName">
-                Taxpayer First Name <span className="text-red-500">*</span>
+                First Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 {...register("taxpayerFirstName")}
@@ -286,7 +311,7 @@ export const AddTaxClient = () => {
 
             <div className="space-y-2">
               <Label htmlFor="taxpayerLastName">
-                Taxpayer Last Name <span className="text-red-500">*</span>
+                Last Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 {...register("taxpayerLastName")}
@@ -306,7 +331,7 @@ export const AddTaxClient = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="taxpayerSSN">
-                Taxpayer SSN <span className="text-red-500">*</span>
+                SSN <span className="text-red-500">*</span>
               </Label>
               <Input
                 {...register("taxpayerSSN")}
@@ -323,7 +348,7 @@ export const AddTaxClient = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="taxpayerDOB">Taxpayer DOB</Label>
+              <Label htmlFor="taxpayerDOB">Date Of Birth</Label>
               <Input
                 {...register("taxpayerDOB")}
                 id="taxpayerDOB"
@@ -340,7 +365,7 @@ export const AddTaxClient = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="taxpayerOccupation">Taxpayer Occupation</Label>
+              <Label htmlFor="taxpayerOccupation">Occupation</Label>
               <Input
                 {...register("taxpayerOccupation")}
                 id="taxpayerOccupation"
@@ -361,7 +386,11 @@ export const AddTaxClient = () => {
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select..." />
+                      <SelectValue placeholder="Select...">
+                        {field.value
+                          ? getFilingStatusLabel(field.value)
+                          : "Select..."}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -446,7 +475,11 @@ export const AddTaxClient = () => {
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select..." />
+                      <SelectValue placeholder="Select...">
+                        {field.value
+                          ? getContactMethodLabel(field.value)
+                          : "Select..."}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>

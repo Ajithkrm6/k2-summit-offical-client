@@ -50,6 +50,8 @@ const editFields: {
   { name: "mailingAddress", label: "Address" },
   { name: "phoneNumber", label: "Phone", type: "tel" },
   { name: "email", label: "Email", type: "email" },
+  { name: "preferredContactMethod", label: "Preferred Contact Method" },
+  { name: "taxpayerOccupation", label: "Occupation" },
 ];
 
 interface SelectedClient {
@@ -90,6 +92,8 @@ export const TaxClients = () => {
       mailingAddress: "",
       phoneNumber: "",
       email: "",
+      preferredContactMethod: "",
+      taxpayerOccupation: "",
     },
   });
   const { taxFirms, isLoading, error: firmsError } = useGetTaxFirms();
@@ -160,9 +164,17 @@ export const TaxClients = () => {
       address: data.mailingAddress || null,
       phoneNumber: data.phoneNumber || null,
       email: data.email || null,
+
+      taxpayerOccupation: data.taxpayerOccupation || null,
     });
   };
 
+  const maskSSN = (ssn: string | null | undefined) => {
+    if (!ssn) return "Not available";
+    const cleaned = ssn.replace(/\D/g, "");
+    if (cleaned.length !== 9) return "Invalid SSN";
+    return `xxx-xx-${cleaned.slice(-4)}`;
+  };
   return (
     <div className="container min-h-screen space-y-6 rounded-lg bg-white p-4">
       <section
@@ -276,17 +288,23 @@ export const TaxClients = () => {
             <caption className="sr-only">Saved tax clients</caption>
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                {["Name", "Firm", "Tax Year", "Email", "Phone", "Actions"].map(
-                  (heading) => (
-                    <th
-                      key={heading}
-                      scope="col"
-                      className="whitespace-nowrap px-4 py-3 font-medium text-center"
-                    >
-                      {heading}
-                    </th>
-                  ),
-                )}
+                {[
+                  "Client Id",
+                  "Name",
+                  "SSN",
+                  "Tax Year",
+                  "Email",
+                  "Phone",
+                  "Actions",
+                ].map((heading) => (
+                  <th
+                    key={heading}
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 font-medium text-center"
+                  >
+                    {heading}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -315,12 +333,15 @@ export const TaxClients = () => {
                     className="border-t"
                   >
                     <td className="px-4 py-3 text-center">
+                      {client.taxPersonClientId ?? "Not provided"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
                       {[client.taxpayerFirstName, client.taxpayerLastName]
                         .filter(Boolean)
                         .join(" ") || "Not provided"}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {selectedFirmName || selectedFirmId}
+                      {maskSSN(client?.taxpayerSsn) ?? "Not provided"}
                     </td>
                     <td className="px-4 py-3 text-center">
                       {client.taxYear ?? "Not provided"}

@@ -1,8 +1,8 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FieldErrors } from "react-hook-form";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTaxClientSchema, type CreateTaxClientFormData } from "../lib";
 
 const state = vi.hoisted(() => ({
@@ -72,7 +72,7 @@ vi.mock("@/components/ui/select", () => {
   };
 });
 
-import AddTaxFirmPage from "../../../../app/(protected)/crm/addTaxFirm/page";
+import AddTaxFirmPage from "../../../../app/(protected)/crm/taxFirm/page";
 
 describe("/crm/addTaxFirm taxpayer form", () => {
   beforeEach(() => {

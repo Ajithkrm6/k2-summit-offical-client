@@ -21,6 +21,10 @@ vi.mock("@/lib/api/generated/k2-tax-api", () => ({
   getGetApiV1TaxFirmTaxFirmIdTaxPersonClientsQueryKey: (id: string) => [
     `/api/v1/TaxFirm/${id}/TaxPersonClients`,
   ],
+  getGetApiV1UserTaxFirmsQueryKey: () => ["/api/v1/User/TaxFirms"],
+  getGetApiV1TaxFirmTaxFirmIdQueryKey: (id: string) => [
+    `/api/v1/TaxFirm/${id}`,
+  ],
 }));
 
 import { useAddTaxClient } from "./useAddTaxClient";
@@ -188,6 +192,31 @@ describe("useAddTaxClient", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: [`/api/v1/TaxFirm/${form.firmId}/TaxPersonClients`],
     });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: [`/api/v1/TaxFirm/${form.firmId}`],
+    });
     expect(onSuccess).toHaveBeenCalledOnce();
+  });
+
+  it("calls onError for an API business error", async () => {
+    const onError = vi.fn();
+    useAddTaxClient({ onError });
+    await useMutation.mock.calls[0][0].mutation.onSuccess(
+      { data: { isError: true, firstError: { description: "Invalid SSN" } } },
+      { taxfirmid: form.firmId },
+    );
+    expect(onError).toHaveBeenCalledOnce();
+  });
+
+  it("calls onError for a network/HTTP error", () => {
+    const onError = vi.fn();
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      useAddTaxClient({ onError });
+      useMutation.mock.calls[0][0].mutation.onError({ message: "boom" });
+      expect(onError).toHaveBeenCalledOnce();
+    } finally {
+      log.mockRestore();
+    }
   });
 });

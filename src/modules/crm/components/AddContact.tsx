@@ -16,11 +16,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useAddContact } from "@/lib/api/hooks/k2-tax-api/useAddContact";
 import { useGetTaxFirms } from "@/lib/api/hooks/k2-tax-api/useGetTaxFirms";
-import {
-  CreateContactFormData,
-  createContactSchema,
-  ROLE_TITLE_OPTIONS,
-} from "@/modules/crm/lib";
+import { useLookupData } from "@/lib/api/hooks/k2-tax-api/useLookupData";
+import { CreateContactFormData, createContactSchema } from "@/modules/crm/lib";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,6 +26,11 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 export const AddContact = () => {
   const router = useRouter();
   const { taxFirms, isLoading } = useGetTaxFirms();
+  const {
+    contactTypes,
+    contactMethodTypes,
+    isLoading: lookupLoading,
+  } = useLookupData();
 
   // Extract firm IDs and names from taxFirms data
   const firmOptions =
@@ -89,15 +91,29 @@ export const AddContact = () => {
     });
   };
 
-  const roleOptions = [
-    { label: "Select a role...", value: null },
-    ...ROLE_TITLE_OPTIONS,
-  ];
+  const roleOptions = contactTypes.flatMap((item) =>
+    item.contactTypeId != null
+      ? [
+          {
+            value: item.contactTypeId,
+            label: item.contactTypeName || `Role ${item.contactTypeId}`,
+          },
+        ]
+      : [],
+  );
 
-  const contactMethodOptions = [
-    { label: "Email", value: 2 },
-    { label: "Phone", value: 3 },
-  ];
+  const contactMethodOptions = contactMethodTypes.flatMap((item) =>
+    item.contactMethodTypeId != null
+      ? [
+          {
+            value: item.contactMethodTypeId,
+            label:
+              item.contactMethodTypeName ||
+              `Method ${item.contactMethodTypeId}`,
+          },
+        ]
+      : [],
+  );
 
   return (
     <div className="p-4 container space-y-3 min-h-screen bg-white rounded-lg">
@@ -124,7 +140,9 @@ export const AddContact = () => {
       <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="firmSelect">Select Firm *</Label>
+            <Label htmlFor="firmSelect">
+              Select Firm <span className="text-red-500">*</span>
+            </Label>
             <Controller
               name="firmId"
               control={control}
@@ -244,14 +262,24 @@ export const AddContact = () => {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Roles</SelectLabel>
-                          {roleOptions.map((item) => (
-                            <SelectItem
-                              key={item.value || "null"}
-                              value={(item.value || "").toString()}
-                            >
-                              {item.label}
+                          {lookupLoading ? (
+                            <SelectItem value="loading" disabled>
+                              Loading...
                             </SelectItem>
-                          ))}
+                          ) : roleOptions.length === 0 ? (
+                            <SelectItem value="empty" disabled>
+                              No roles available
+                            </SelectItem>
+                          ) : (
+                            roleOptions.map((item) => (
+                              <SelectItem
+                                key={item.value}
+                                value={item.value.toString()}
+                              >
+                                {item.label}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -265,7 +293,9 @@ export const AddContact = () => {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber">
+                Phone Number<span className="text-red-500">*</span>
+              </Label>
               <Input
                 {...register("phoneNumber")}
                 id="phoneNumber"
@@ -298,7 +328,9 @@ export const AddContact = () => {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">
+                Email<span className="text-red-500">*</span>
+              </Label>
               <Input
                 {...register("email")}
                 id="email"
@@ -346,14 +378,24 @@ export const AddContact = () => {
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Contact Methods</SelectLabel>
-                        {contactMethodOptions.map((item) => (
-                          <SelectItem
-                            key={item.value}
-                            value={item.value.toString()}
-                          >
-                            {item.label}
+                        {lookupLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Loading...
                           </SelectItem>
-                        ))}
+                        ) : contactMethodOptions.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            No methods available
+                          </SelectItem>
+                        ) : (
+                          contactMethodOptions.map((item) => (
+                            <SelectItem
+                              key={item.value}
+                              value={item.value.toString()}
+                            >
+                              {item.label}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>

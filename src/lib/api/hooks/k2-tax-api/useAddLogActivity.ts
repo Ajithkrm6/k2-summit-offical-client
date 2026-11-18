@@ -1,6 +1,7 @@
 import { toast } from "@/components/ui/toast";
 import {
   getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey,
+  getGetApiV1TaxFirmTaxFirmIdQueryKey,
   usePostApiV1TaxFirmTaxfirmidLogActivity,
 } from "@/lib/api/generated/k2-tax-api";
 import type { CreateLogActivityRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
@@ -11,11 +12,13 @@ import type { AxiosError } from "axios";
 interface UseAddLogActivityOptions {
   taxFirmId: string;
   onSuccess?: () => void;
+  onError?: () => void;
 }
 
 export const useAddLogActivity = ({
   taxFirmId,
   onSuccess,
+  onError,
 }: UseAddLogActivityOptions) => {
   const queryClient = useQueryClient();
   const { mutate, isPending, error } = usePostApiV1TaxFirmTaxfirmidLogActivity({
@@ -23,6 +26,10 @@ export const useAddLogActivity = ({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
           queryKey: getGetApiV1TaxFirmTaxFirmIdLogActivitiesQueryKey(taxFirmId),
+        });
+        // Refresh the firm detail page, which lists the firm's activities
+        await queryClient.invalidateQueries({
+          queryKey: getGetApiV1TaxFirmTaxFirmIdQueryKey(taxFirmId),
         });
         toast.add({
           title: "Activity logged successfully",
@@ -37,6 +44,7 @@ export const useAddLogActivity = ({
           type: "error",
         });
         console.error("Add log activity failed:", err);
+        onError?.();
       },
     },
   });

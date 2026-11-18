@@ -1,5 +1,6 @@
 import { toast } from "@/components/ui/toast";
 import {
+  getGetApiV1TaxFirmTaxFirmIdQueryKey,
   getGetApiV1TaxFirmTaxFirmIdTaxFirmContactsQueryKey,
   getGetApiV1UserTaxFirmsQueryKey,
   usePatchApiV1TaxFirmTaxFirmIdContactContactId,
@@ -7,9 +8,15 @@ import {
 import type { UpdateTaxFirmContactRequest } from "@/lib/api/generated/k2-tax-api/k2TaxAPI.schemas";
 import { useQueryClient } from "@tanstack/react-query";
 
+interface UseUpdateContactOptions {
+  onSuccess?: () => void;
+  onError?: () => void;
+}
+
 export const useUpdateContact = ({
   onSuccess,
-}: { onSuccess?: () => void } = {}) => {
+  onError,
+}: UseUpdateContactOptions = {}) => {
   const queryClient = useQueryClient();
   const { mutate, isPending } = usePatchApiV1TaxFirmTaxFirmIdContactContactId({
     mutation: {
@@ -22,6 +29,7 @@ export const useUpdateContact = ({
               "The contact could not be updated",
             type: "error",
           });
+          onError?.();
           return;
         }
         await Promise.all([
@@ -32,6 +40,9 @@ export const useUpdateContact = ({
           }),
           queryClient.invalidateQueries({
             queryKey: getGetApiV1UserTaxFirmsQueryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: getGetApiV1TaxFirmTaxFirmIdQueryKey(variables.taxFirmId),
           }),
         ]);
         toast.add({ title: "Contact updated successfully", type: "success" });
@@ -44,6 +55,7 @@ export const useUpdateContact = ({
           type: "error",
         });
         console.error("Update contact failed:", error);
+        onError?.();
       },
     },
   });

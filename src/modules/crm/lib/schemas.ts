@@ -19,12 +19,24 @@ const pastDateSchema = (label: string) =>
     .optional();
 
 export const phoneNumberSchema = z
-  .string()
+  .string({ error: "Phone number is required" })
   .refine(
     (value) =>
       value === "" || (value.length === 12 && /^\+1[0-9]{10}$/.test(value)),
     "Enter +1 followed by exactly 10 digits (e.g. +15551234567)",
   );
+
+export const contactPhoneNumberSchema = z
+  .string({ error: "Phone number is required" })
+  .min(1, "Phone number is required")
+  .refine(
+    (value) => value.length === 12 && /^\+1[0-9]{10}$/.test(value),
+    "Enter +1 followed by exactly 10 digits (e.g. +15551234567)",
+  );
+
+export const emailSchema = z
+  .string({ error: "Email is required" })
+  .email("Invalid email address");
 
 /**
  * CRM Module Schemas
@@ -39,15 +51,21 @@ export const createTaxFirmSchema = z.object({
   leadStatusTypeId: z.number({ error: "Lead status is required" }).int(),
   firmTypeId: z.number({ error: "Firm type is required" }).int(),
   credentialTypeId: z.number().int().nullable().optional(),
-  firmName: personNameSchema("Firm name")
+  firmName: z
+    .string({ error: "Firm name is required" })
+    .trim()
     .min(1, "Firm name is required")
-    .max(255, "Firm name cannot exceed 255 characters"),
+    .max(255, "Firm name cannot exceed 255 characters")
+    .regex(
+      /^[A-Za-z0-9 ]*$/,
+      "Firm name must contain only letters, numbers, and spaces",
+    ),
   address: z
     .string()
     .max(500, "Address cannot exceed 500 characters")
     .nullable()
     .optional(),
-  mainPhoneNumber: phoneNumberSchema.nullable().optional(),
+  mainPhoneNumber: phoneNumberSchema.min(1, "Main phone number is required"),
   websiteUrl: z
     .string()
     .refine((url) => {
@@ -133,12 +151,9 @@ export const createContactSchema = z.object({
     .number({ error: "Please select a role / title" })
     .int()
     .positive("Please select a role / title"),
-  phoneNumber: phoneNumberSchema.nullable().optional(),
+  phoneNumber: contactPhoneNumberSchema,
   cellPhone: phoneNumberSchema.nullable().optional(),
-  email: z
-    .union([z.literal(""), z.string().email("Invalid email address")])
-    .nullable()
-    .optional(),
+  email: emailSchema,
   preferredContactMethodTypeId: z
     .number({ error: "Please select a preferred contact method" })
     .int()
@@ -162,7 +177,6 @@ export const createContactSchema = z.object({
 
 export const editContactSchema = createContactSchema.omit({
   firmId: true,
-  bestTimeToReach: true,
 });
 export type EditContactFormData = z.infer<typeof editContactSchema>;
 
@@ -235,6 +249,8 @@ export const editTaxClientSchema = createTaxClientSchema.pick({
   mailingAddress: true,
   phoneNumber: true,
   email: true,
+  preferredContactMethod: true,
+  taxpayerOccupation: true,
 });
 export type EditTaxClientFormData = z.infer<typeof editTaxClientSchema>;
 
